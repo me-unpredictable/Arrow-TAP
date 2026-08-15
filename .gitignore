@@ -3,6 +3,11 @@ node_modules/
 
 # Production builds
 dist/
+www/
+
+# Cordova Platform & Plugin artifacts
+platforms/
+plugins/
 
 # Operating System & IDE
 .DS_Store

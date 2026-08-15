@@ -87,9 +87,19 @@ npm install
 npm run dev
 ```
 
-### Production Build
+### Production Web Build
 ```bash
 npm run build
+```
+
+### 📱 Android APK Compilation (Cordova)
+Targeting **Android 15 (API 35)** with backwards compatibility down to API 24+:
+```bash
+# Build web assets and compile debug APK
+npm run build:apk
+
+# Output APK path:
+# platforms/android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ---
@@ -108,7 +118,7 @@ Crafted with passion by **[@me__unpredictable](https://github.com/me-unpredictab
 - [x] **Chapter 4: The Mathematical Maze Engine** — Potential-gradient DAG generator, winding arrow trajectories, and zero-deadlock proofs.
 - [x] **Chapter 5: Tactile Mobile Haptics** — Tap vibration and 100ms victory celebration bursts.
 - [x] **Chapter 6: Visual Polish & Celebration Juice** — Dynamic progress bars, 50 cheering phrases, bouncing text, and emoji floods.
-- [ ] **Chapter 7: Cordova Mobile Packaging** — Native Android APK/AAB export and release readiness.
+- [x] **Chapter 7: Cordova Mobile Packaging** — Native Android APK compiled and verified for Android 15 (API 35) & Android 5.0+.
 
 ---
 

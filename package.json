@@ -12,9 +12,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:apk": "npm run build && cordova prepare android && (cd platforms/android && gradle assembleDebug)"
   },
   "dependencies": {
+    "cordova-plugin-statusbar": "^4.0.0",
+    "cordova-plugin-vibration": "^3.1.1",
     "gsap": "^3.12.7",
     "pixi.js": "^8.8.1"
   },
@@ -22,5 +25,14 @@
     "@types/node": "^22.13.4",
     "typescript": "^5.7.3",
     "vite": "^6.1.0"
+  },
+  "cordova": {
+    "plugins": {
+      "cordova-plugin-vibration": {},
+      "cordova-plugin-statusbar": {}
+    },
+    "platforms": [
+      "android"
+    ]
   }
 }
