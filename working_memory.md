@@ -84,9 +84,15 @@ To guarantee seamless gameplay across phones, tablets, foldables, and desktops:
   3. *Squish & Pop:* Instant scale inversion to 0 with shockwave ring.
   4. *Pixel Vaporize:* Scatter burst into tiny colorful confetti particles.
 
-### 3.4 Rope untangling & Mathematical Solvability
-### 3.4 Procedural 500+ Composite Silhouette Shapes
-The game features a rich catalog of 2D geometric, vehicular, architectural, alphanumeric, and natural shape primitives (Car, Bus, Truck, Home, Castle, Rocket, Heart, Apple, Star, Shield, Diamond, Cloud, Crown, Key, Cup, Fish, Tree, Guitar, Boat, A–Z, 0–9).
+### 3.4 Procedural 500+ Composite Silhouette Shapes & Winding Rope Constraint
+- **Winding Multi-Bend Constraint:**
+  - Every puzzle board enforces $\le 1$ straight line across the entire board.
+  - All other ropes are forced to feature multiple $90^\circ$ turns (L-shapes, U-shapes, S-bends, spiral hooks) as seen in `1.jpg` and `2.jpg`.
+- **Screen-Adaptive Grid Density:**
+  - Puzzle density scales dynamically with device screen pixels ($N = 20$ up to $48$).
+  - Larger screens automatically generate denser, more intricate mazes.
+- **Ultra-Compact HUD & Maximum Board Screen Space:**
+  - HUD is condensed into slim top/bottom pills (16px and 20px padding), dedicating $>90\%$ of screen real estate directly to the board.
 - **Procedural CSG Jumbling:** Primitives are combined via Constructive Solid Geometry (CSG) operations:
   - *Side-by-Side Dual Union:* $S_A(x_1, y) \cup S_B(x_2, y)$
   - *Vertical Stacked Union:* $S_A(x, y_1) \cup S_B(x, y_2)$
@@ -94,11 +100,12 @@ The game features a rich catalog of 2D geometric, vehicular, architectural, alph
   - *Concentric Nested Blend:* $S_A(\alpha x, \alpha y) \cup S_B(\beta x, \beta y)$
 - Produces over 500+ uniquely recognizable puzzle boards across infinite levels.
 
-### 3.5 Ultra-Compact Textured Ropes & True Snake Physics
-1. **Compact Dimensions & Realistic Texture:**
-   - Slim braided rope width ($2.5\text{px} - 4.5\text{px}$) allowing high-density maze weaving (14x14 up to 24x24 matrices).
-   - High-contrast outer boundary with dynamic braided fiber weave texture (cross-stitch highlights).
-   - Sharp directional micro-arrowheads at the head and tactile knot buttons at the tail.
+### 3.5 Ultra-Thin Razor Line Rendering & True Snake Physics
+1. **Ultra-Thin Dimensions (Matching 1.jpg & 2.jpg):**
+   - Stroke width: $1.8\text{px} - 2.8\text{px}$.
+   - Crisp rounded polyline joins.
+   - Sharp, delicate directional chevron arrowheads at the head.
+   - Tiny circular knot buttons at the tail.
 2. **True Snake Slither Physics:**
    - Pulling traverses polyline vertices forward out through the unblocked raycast path.
 3. **Audio-Synced 3-2-1-GO Countdown:**

@@ -1,6 +1,6 @@
 /**
  * @file game.ts
- * @description Main game controller with 3-2-1-GO audio countdown, 500+ composite board shapes, 50 cheering phrases, and compact textured ropes.
+ * @description Main game controller with full-screen adaptive maze scaling, ultra-thin winding ropes, 3-2-1-GO audio countdown, and 50 cheering phrases.
  */
 
 import * as PIXI from 'pixi.js';
@@ -35,7 +35,7 @@ export class ArrowTapGame {
     lives: 3,
     shufflesRemainingInStreak: 3,
     ropes: [],
-    gridSize: 14,
+    gridSize: 20,
     shapeName: 'Car',
     validCells: new Set(),
     isPlaying: false,
@@ -142,7 +142,7 @@ export class ArrowTapGame {
       lives: 3,
       shufflesRemainingInStreak: 3,
       ropes: [],
-      gridSize: 14,
+      gridSize: 20,
       shapeName: 'Car',
       validCells: new Set(),
       isPlaying: true,
@@ -161,13 +161,6 @@ export class ArrowTapGame {
     this.loadLevel(this.state.level);
   }
 
-  /**
-   * Triggers the synced 3-2-1-GO audio and visual countdown before board interactivity begins.
-   * 
-   * @param {() => void} onReady - Callback when countdown reaches "GO!" and finishes.
-   * @returns {void}
-   * @description Flashes high-impact animated countdown digits synced with audio synth beeps.
-   */
   private runCountdown(onReady: () => void): void {
     this.isCountingDown = true;
     this.countdownContainer.removeChildren();
@@ -187,7 +180,7 @@ export class ArrowTapGame {
       if (current >= steps.length) {
         this.isCountingDown = false;
         this.countdownContainer.removeChildren();
-        this.audio.start(); // Start upbeat techno music right on GO!
+        this.audio.start();
         onReady();
         return;
       }
@@ -200,7 +193,7 @@ export class ArrowTapGame {
         text: item.text,
         style: {
           fontFamily: 'Segoe UI, Impact, sans-serif',
-          fontSize: item.text === 'GO !' ? 72 : 84,
+          fontSize: item.text === 'GO !' ? 68 : 80,
           fontWeight: 'bold',
           fill: item.color,
           stroke: { color: 0x000000, width: 8 },
@@ -217,7 +210,7 @@ export class ArrowTapGame {
         current++;
         playNextStep();
       }})
-      .to(txt.scale, { x: 1.25, y: 1.25, duration: 0.18, ease: 'back.out(2)' })
+      .to(txt.scale, { x: 1.2, y: 1.2, duration: 0.18, ease: 'back.out(2)' })
       .to(txt.scale, { x: 1.0, y: 1.0, duration: 0.15 })
       .to(txt, { alpha: 0, duration: 0.12 });
     };
@@ -226,7 +219,10 @@ export class ArrowTapGame {
   }
 
   private loadLevel(level: number): void {
-    const levelData = generateSolvableLevel(level);
+    // Generate adaptive level size matched to screen pixel dimensions
+    const minScreenDim = Math.min(this.app.screen.width, this.app.screen.height);
+    const levelData = generateSolvableLevel(level, minScreenDim);
+
     this.state.ropes = levelData.ropes;
     this.state.gridSize = levelData.gridSize;
     this.state.shapeName = levelData.shapeName;
@@ -239,13 +235,12 @@ export class ArrowTapGame {
     this.hud.updateProgress(0);
     this.hud.updateLevel(level);
 
-    // Run Synced 3-2-1-GO Countdown before starting board play
     this.runCountdown(() => {
       spawnFloatingText(
         this.fxContainer,
         `📍 ${this.state.shapeName.toUpperCase()}`,
         this.app.screen.width / 2,
-        this.app.screen.height / 2 - 60,
+        this.boardOriginY + 30,
         0x00F0FF
       );
     });
@@ -260,7 +255,6 @@ export class ArrowTapGame {
     const canExit = canRopeExit(rope, this.state.ropes, this.state.gridSize, this.state.validCells);
 
     if (canExit) {
-      // SUCCESSFUL UNTANGLE
       this.audio.playSuccessSound();
       this.state.score += 1;
       this.hud.updateScore(this.state.score);
@@ -276,18 +270,16 @@ export class ArrowTapGame {
       const headPos = rope.body[rope.body.length - 1];
       const headPixelX = this.boardOriginX + (headPos.x + 0.5) * this.cellSize;
       const headPixelY = this.boardOriginY + (headPos.y + 0.5) * this.cellSize;
-      floodEmojis(this.fxContainer, headPixelX, headPixelY, 12);
-      spawnFloatingText(this.fxContainer, '+1', headPixelX, headPixelY - 15, 0x00FF66);
+      floodEmojis(this.fxContainer, headPixelX, headPixelY, 10);
+      spawnFloatingText(this.fxContainer, '+1', headPixelX, headPixelY - 12, 0x00FF66);
 
       const clearedCount = this.totalRopesInCurrentLevel - this.state.ropes.length;
       this.hud.updateProgress(clearedCount / this.totalRopesInCurrentLevel);
 
-      // Check for Level Completion
       if (this.state.ropes.length === 0) {
         this.audio.playFanfareSound();
-        floodEmojis(this.fxContainer, this.app.screen.width / 2, this.app.screen.height / 2, 50);
+        floodEmojis(this.fxContainer, this.app.screen.width / 2, this.app.screen.height / 2, 45);
 
-        // Pick one of the 50 cheering phrases
         const cheeringPhrase = getRandomCheeringPhrase();
         spawnFloatingText(
           this.fxContainer,
@@ -304,7 +296,6 @@ export class ArrowTapGame {
         return;
       }
 
-      // 3-Tap Shuffle Mechanism
       this.state.shufflesRemainingInStreak -= 1;
       if (this.state.shufflesRemainingInStreak <= 0) {
         this.triggerShuffle();
@@ -312,10 +303,9 @@ export class ArrowTapGame {
         this.hud.updateShuffleCounter(this.state.shufflesRemainingInStreak);
       }
     } else {
-      // ILLEGAL / BLOCKED TAP
       this.audio.playErrorSound();
       handle.animateBlockedShake(this.cellSize, this.boardOriginX, this.boardOriginY);
-      triggerScreenShake(this.rootContainer, 12, 0.2);
+      triggerScreenShake(this.rootContainer, 10, 0.2);
 
       this.state.lives -= 1;
       this.hud.updateLives(this.state.lives);
@@ -343,9 +333,9 @@ export class ArrowTapGame {
     this.state.ropes = shuffleRemainingRopes(this.state.ropes, this.state.gridSize, this.state.validCells);
 
     gsap.timeline()
-      .to(this.ropesContainer.scale, { x: 0.95, y: 0.95, duration: 0.1, yoyo: true, repeat: 1 })
+      .to(this.ropesContainer.scale, { x: 0.96, y: 0.96, duration: 0.08, yoyo: true, repeat: 1 })
       .to(this.ropesContainer, {
-        rotation: 0.08,
+        rotation: 0.06,
         duration: 0.08,
         yoyo: true,
         repeat: 1,
@@ -365,7 +355,7 @@ export class ArrowTapGame {
       this.fxContainer,
       'GAME OVER',
       this.app.screen.width / 2,
-      this.app.screen.height / 2 - 30,
+      this.app.screen.height / 2 - 20,
       0xFF0055
     );
 
@@ -385,10 +375,10 @@ export class ArrowTapGame {
       const px = this.boardOriginX + gx * this.cellSize;
       const py = this.boardOriginY + gy * this.cellSize;
 
-      this.boardBg.roundRect(px + 0.5, py + 0.5, this.cellSize - 1, this.cellSize - 1, 3);
+      this.boardBg.roundRect(px + 0.3, py + 0.3, this.cellSize - 0.6, this.cellSize - 0.6, 2);
     }
-    this.boardBg.fill({ color: 0x111A2E, alpha: 0.75 });
-    this.boardBg.stroke({ color: 0x1E2D4A, width: 0.8, alpha: 0.4 });
+    this.boardBg.fill({ color: 0x101728, alpha: 0.7 });
+    this.boardBg.stroke({ color: 0x1A2640, width: 0.6, alpha: 0.35 });
 
     for (const rope of this.state.ropes) {
       const handle = createRopeGraphic(rope, (r) => this.handleKnotTap(r));
@@ -402,10 +392,12 @@ export class ArrowTapGame {
     const width = this.app.screen.width;
     const height = this.app.screen.height;
 
-    const availableHeight = height - 160;
-    const availableWidth = width - 30;
+    // Reserve minimal 45px vertical padding total (top + bottom HUD)
+    const availableHeight = height - 54;
+    const availableWidth = width - 16;
 
-    this.boardPixelSize = Math.max(260, Math.min(availableWidth, availableHeight, 640));
+    // Maximize square board to fill as much screen area as possible
+    this.boardPixelSize = Math.max(260, Math.min(availableWidth, availableHeight, 900));
     this.cellSize = this.boardPixelSize / this.state.gridSize;
 
     this.boardOriginX = (width - this.boardPixelSize) / 2;
