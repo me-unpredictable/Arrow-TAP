@@ -1,6 +1,6 @@
 /**
  * @file hud.ts
- * @description Ultra-compact HUD maximizing board gameplay area with slim top status pill and bottom lives.
+ * @description Ultra-compact HUD with top status bar, level progress, mute button, and bottom lives.
  */
 
 import * as PIXI from 'pixi.js';
@@ -13,17 +13,18 @@ export interface HudController {
   updateProgress: (progressFraction: number) => void;
   updateShuffleCounter: (remainingTaps: number) => void;
   updateLives: (lives: number) => void;
-  resize: (width: number, height: number, boardSize: number, boardY: number) => void;
+  updateMuteState: (isMuted: boolean) => void;
+  resize: (width: number, height: number) => void;
 }
 
 /**
- * Creates the ultra-compact HUD.
+ * Creates the ultra-compact HUD with audio mute button and responsive touch targets.
  * 
- * @param {void} - No input parameters.
+ * @param {(isMuted: boolean) => void} [onToggleMute] - Optional mute toggle callback.
  * @returns {HudController} Controller with update and resize handlers.
- * @description Builds slim header and footer UI taking minimal screen padding.
+ * @description Builds slim header, mute button, and footer UI taking minimal screen padding.
  */
-export function createHud(): HudController {
+export function createHud(onToggleMute?: () => void): HudController {
   const container = new PIXI.Container();
 
   // TOP BAR
@@ -67,6 +68,34 @@ export function createHud(): HudController {
   });
   shuffleText.anchor.set(0.5, 0.5);
   topBar.addChild(shuffleText);
+
+  // MUTE BUTTON
+  const muteBtn = new PIXI.Container();
+  muteBtn.eventMode = 'static';
+  muteBtn.cursor = 'pointer';
+
+  const muteBg = new PIXI.Graphics();
+  muteBg.roundRect(-16, -16, 32, 32, 8);
+  muteBg.fill({ color: 0x1E293B, alpha: 0.8 });
+  muteBg.stroke({ color: 0x38BDF8, width: 1.2, alpha: 0.5 });
+  muteBtn.addChild(muteBg);
+
+  const muteIcon = new PIXI.Text({
+    text: '🔊',
+    style: { fontSize: 16 }
+  });
+  muteIcon.anchor.set(0.5);
+  muteBtn.addChild(muteIcon);
+
+  muteBtn.on('pointerdown', (e) => {
+    e.stopPropagation();
+    gsap.fromTo(muteBtn.scale, { x: 0.82, y: 0.82 }, { x: 1, y: 1, duration: 0.18, ease: 'back.out(2)' });
+    if (onToggleMute) {
+      onToggleMute();
+    }
+  });
+
+  topBar.addChild(muteBtn);
 
   const progressBarBg = new PIXI.Graphics();
   const progressBarFill = new PIXI.Graphics();
@@ -145,23 +174,31 @@ export function createHud(): HudController {
       }
     },
 
+    updateMuteState: (isMuted: boolean) => {
+      muteIcon.text = isMuted ? '🔇' : '🔊';
+      muteBg.tint = isMuted ? 0xEF4444 : 0xFFFFFF;
+    },
+
     resize: (width: number, height: number) => {
-      // Ultra-compact top bar (takes only top 16px)
       topBar.x = width / 2;
       topBar.y = 18;
 
-      currentBarWidth = Math.min(width * 0.9, 320);
+      currentBarWidth = Math.min(width * 0.8, 300);
       levelText.x = -currentBarWidth / 2;
       levelText.y = -10;
-      scoreText.x = currentBarWidth / 2;
+      scoreText.x = currentBarWidth / 2 - 38;
       scoreText.y = -10;
-      shuffleText.x = 0;
+      shuffleText.x = -15;
       shuffleText.y = -10;
 
-      progressBarBg.y = 10;
-      progressBarFill.y = 10;
+      // Position Mute Button to top right
+      muteBtn.x = currentBarWidth / 2 + 10;
+      muteBtn.y = -10;
 
-      // Ultra-compact bottom bar (takes only bottom 20px)
+      progressBarBg.y = 12;
+      progressBarFill.y = 12;
+
+      // Bottom bar
       bottomBar.x = width / 2;
       bottomBar.y = height - 16;
 

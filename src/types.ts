@@ -25,7 +25,7 @@ export interface Vector2D {
 export interface Rope {
   id: number;
   color: number;
-  body: GridCoord[]; // Ordered list of grid coordinates from Tail (knot) to Head (arrow)
+  body: GridCoord[]; // Ordered list of grid coordinates from Tail to Head (arrow)
   exitDirection: Vector2D; // Direction the head arrow is facing
 }
 
@@ -53,6 +53,7 @@ export interface GameState {
   validCells: Set<string>;
   isPlaying: boolean;
   isGameOver: boolean;
+  isMuted: boolean;
 }
 
 /**
@@ -67,6 +68,8 @@ export interface TechnoAudioController {
   start: () => void;
   stop: () => void;
   setBpm: (bpm: number) => void;
+  toggleMute: () => boolean;
+  isMuted: () => boolean;
   playTapSound: () => void;
   playSuccessSound: () => void;
   playErrorSound: () => void;

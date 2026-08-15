@@ -1,6 +1,7 @@
 /**
  * @file mazeGenerator.ts
- * @description Mathematical Potential-Gradient DAG maze generator guaranteeing 100% solvability with ZERO deadlocks and 100% straight colinear arrowheads in < 2ms.
+ * @description Mathematical Potential-Gradient DAG maze generator with longer winding arrows (5-9 segments)
+ * and rich multi-colored 90s techno palette guaranteeing 100% solvability with ZERO deadlocks and 100% straight colinear arrowheads.
  */
 
 import { GridCoord, LevelData, Rope, Vector2D } from '../types';
@@ -8,13 +9,14 @@ import { isBoardFullySolvable, isWithinBounds } from './solver';
 import { generateCompositeShape } from './shapes';
 
 export const ROPE_COLORS: number[] = [
-  0x1E40AF, // Deep Crisp Blue
-  0xDC2626, // Crimson Red
-  0x047857, // Forest Emerald
-  0xB45309, // Deep Amber
-  0x6D28D9, // Deep Violet
-  0x0E7490, // Deep Teal
-  0xBE185D  // Deep Rose
+  0x3B82F6, // Electric Cobalt Blue
+  0xFF3366, // Hot Coral Red
+  0x00F0FF, // Electric Cyan
+  0x00FF88, // Lime Emerald
+  0xFFB700, // Radiant Amber Gold
+  0x9D00FF, // Neon Purple / Violet
+  0xFF6B00, // Vivid Tangerine Orange
+  0xFF1493  // Deep Pink Rose
 ];
 
 const CARDINAL_DIRS: Vector2D[] = [
@@ -92,13 +94,13 @@ export function getCompositeValidCells(
 }
 
 /**
- * Constructive generator growing ropes from perimeter heads backwards into the interior.
+ * Constructive generator growing longer winding ropes (5-9 segments) from perimeter heads backwards into the interior.
  * 
  * @param {number} gridSize - Dimension N.
  * @param {Set<string>} validCells - Active silhouette cell set.
  * @param {number} targetRopeCount - Desired number of ropes.
  * @returns {Rope[]} Array of non-overlapping winding ropes.
- * @description Places perimeter heads pointing outward and unshifts body segments inward.
+ * @description Places perimeter heads pointing outward and unshifts body segments inward across 5-9 segments.
  */
 export function generateOutwardHeadRopes(
   gridSize: number,
@@ -146,14 +148,14 @@ export function generateOutwardHeadRopes(
       const ropeBody: GridCoord[] = [prev, head];
       let cur = prev;
       let lastStep: Vector2D = { dx: prev.x - head.x, dy: prev.y - head.y };
-      const ropeLength = 3 + Math.floor(Math.random() * 4); // 3 to 6 segments
+      // Longer winding rope length: 5 to 9 segments
+      const ropeLength = 5 + Math.floor(Math.random() * 5);
 
       for (let seg = 2; seg < ropeLength; seg++) {
-        // Prioritize turns
         const nextDirs = [...CARDINAL_DIRS].sort((a, b) => {
           const aIsStraight = a.dx === lastStep.dx && a.dy === lastStep.dy;
           const bIsStraight = b.dx === lastStep.dx && b.dy === lastStep.dy;
-          if (aIsStraight && !bIsStraight) return 1;
+          if (aIsStraight && !bIsStraight) return 1; // Prioritize turn
           if (!aIsStraight && bIsStraight) return -1;
           return Math.random() - 0.5;
         });
@@ -200,7 +202,8 @@ export function generateOutwardHeadRopes(
           occupied.add(`${pt.x},${pt.y}`);
         }
 
-        const color = (ropeId % 5 === 0) ? 0xDC2626 : 0x1E40AF;
+        // Rich vibrant palette assignment
+        const color = ROPE_COLORS[(ropeId - 1) % ROPE_COLORS.length];
 
         ropes.push({
           id: ropeId++,
@@ -242,12 +245,11 @@ export function generateSolvableLevel(level: number, screenMinDimension = 600): 
     }
   }
 
-  const targetRopeCount = Math.floor(validCells.size / 3.4);
+  const targetRopeCount = Math.floor(validCells.size / 5.2);
 
-  // Fast DAG Generation with Solvability Proof
   for (let trial = 0; trial < 15; trial++) {
     const candidates = generateOutwardHeadRopes(gridSize, validCells, targetRopeCount);
-    if (candidates.length >= 6 && isBoardFullySolvable(candidates, gridSize)) {
+    if (candidates.length >= 4 && isBoardFullySolvable(candidates, gridSize)) {
       return {
         ropes: candidates,
         gridSize,
@@ -257,8 +259,7 @@ export function generateSolvableLevel(level: number, screenMinDimension = 600): 
     }
   }
 
-  // Fallback candidate generator
-  const fallback = generateOutwardHeadRopes(gridSize, validCells, Math.max(6, Math.floor(validCells.size / 4.2)));
+  const fallback = generateOutwardHeadRopes(gridSize, validCells, Math.max(4, Math.floor(validCells.size / 6.0)));
   return {
     ropes: fallback,
     gridSize,

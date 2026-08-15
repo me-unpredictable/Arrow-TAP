@@ -1,12 +1,12 @@
 /**
  * @file shuffler.ts
  * @description Instantaneous (< 1ms) dynamic maze shuffler that genuinely rearranges remaining arrows
- * into new winding trajectories with guaranteed 100% solvability and colinear straight arrowheads.
+ * into new winding trajectories with longer lengths, multi-color palette, and guaranteed 100% solvability.
  */
 
 import { GridCoord, Rope, Vector2D } from '../types';
 import { isBoardFullySolvable, isWithinBounds } from './solver';
-import { doesExitHitOwnBody, getDistanceToPerimeter, isRopeStraight } from './mazeGenerator';
+import { doesExitHitOwnBody, getDistanceToPerimeter, isRopeStraight, ROPE_COLORS } from './mazeGenerator';
 
 const CARDINAL_DIRS: Vector2D[] = [
   { dx: 0, dy: -1 }, // North
@@ -70,7 +70,7 @@ export function synthesizeShuffledRopes(
       const ropeBody: GridCoord[] = [prev, head];
       let cur = prev;
       let lastStep: Vector2D = { dx: prev.x - head.x, dy: prev.y - head.y };
-      const ropeLength = 3 + Math.floor(Math.random() * 4); // 3 to 6 segments
+      const ropeLength = 4 + Math.floor(Math.random() * 5); // 4 to 8 segments
 
       for (let seg = 2; seg < ropeLength; seg++) {
         const nextDirs = [...CARDINAL_DIRS].sort((a, b) => {
@@ -123,7 +123,7 @@ export function synthesizeShuffledRopes(
           occupied.add(`${pt.x},${pt.y}`);
         }
 
-        const color = (ropeId % 5 === 0) ? 0xDC2626 : 0x1E40AF;
+        const color = ROPE_COLORS[(ropeId - 1) % ROPE_COLORS.length];
 
         ropes.push({
           id: ropeId++,
@@ -170,9 +170,9 @@ export function shuffleRemainingRopes(
   }
 
   // 2. Synthesize brand new winding paths across the active cells
-  for (let trial = 0; trial < 10; trial++) {
+  for (let trial = 0; trial < 15; trial++) {
     const candidate = synthesizeShuffledRopes(gridSize, activeCells, activeRopes.length);
-    if (candidate.length >= Math.max(2, Math.floor(activeRopes.length * 0.8)) && isBoardFullySolvable(candidate, gridSize)) {
+    if (candidate.length >= Math.max(2, Math.floor(activeRopes.length * 0.75)) && isBoardFullySolvable(candidate, gridSize)) {
       return candidate;
     }
   }
@@ -180,7 +180,6 @@ export function shuffleRemainingRopes(
   // 3. Fallback: Shift or reverse segment endpoints of half the ropes to ensure visible change
   const transformed = activeRopes.map((rope, idx) => {
     if (idx % 2 === 0 && rope.body.length >= 2) {
-      // Reverse direction: swap head and tail
       const reversedBody = [...rope.body].reverse();
       const newHead = reversedBody[reversedBody.length - 1];
       const newPrev = reversedBody[reversedBody.length - 2];

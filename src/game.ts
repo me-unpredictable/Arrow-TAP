@@ -1,67 +1,82 @@
 /**
  * @file game.ts
- * @description Main game controller with full-screen adaptive maze scaling, ultra-thin winding ropes, 3-2-1-GO audio countdown, and 50 cheering phrases.
+ * @description Main game controller for Arrow Tap with screen-adaptive rendering, 3-2-1-GO countdown,
+ * mobile tap vibrations, 100ms victory haptics, HUD mute button, and 3-tap shuffle.
  */
 
 import * as PIXI from 'pixi.js';
 import gsap from 'gsap';
-import { GameState, Rope } from './types';
+import { GameState, Rope, TechnoAudioController } from './types';
 import { createTechnoAudioEngine } from './audio/technoSynth';
+import { createRopeGraphic, RopeGraphicHandle } from './rendering/ropeRenderer';
 import { generateSolvableLevel } from './math/mazeGenerator';
 import { canRopeExit } from './math/solver';
 import { shuffleRemainingRopes } from './math/shuffler';
 import { createHud, HudController } from './ui/hud';
 import { createStartButton } from './ui/startButton';
-import { createRopeGraphic, RopeGraphicHandle } from './rendering/ropeRenderer';
 import { floodEmojis, spawnFloatingText, triggerScreenShake } from './fx/juice';
 import { getRandomCheeringPhrase } from './fx/phrases';
+import { triggerTapHaptic, triggerVictoryHaptic } from './fx/haptics';
 
 export class ArrowTapGame {
   private app: PIXI.Application;
-  private audio = createTechnoAudioEngine();
+  private audio: TechnoAudioController;
   private hud: HudController;
 
-  private rootContainer = new PIXI.Container();
-  private boardContainer = new PIXI.Container();
-  private boardBg = new PIXI.Graphics();
-  private ropesContainer = new PIXI.Container();
-  private fxContainer = new PIXI.Container();
-  private uiContainer = new PIXI.Container();
-  private countdownContainer = new PIXI.Container();
+  private rootContainer: PIXI.Container;
+  private boardContainer: PIXI.Container;
+  private ropesContainer: PIXI.Container;
+  private uiContainer: PIXI.Container;
+  private fxContainer: PIXI.Container;
+  private countdownContainer: PIXI.Container;
+  private boardBg: PIXI.Graphics;
 
-  private state: GameState = {
-    level: 1,
-    score: 0,
-    lives: 3,
-    shufflesRemainingInStreak: 3,
-    ropes: [],
-    gridSize: 20,
-    shapeName: 'Car',
-    validCells: new Set(),
-    isPlaying: false,
-    isGameOver: false
-  };
-
+  private state: GameState;
   private activeRopeHandles: Map<number, RopeGraphicHandle> = new Map();
-  private totalRopesInCurrentLevel = 0;
-  private startButtonContainer: PIXI.Container | null = null;
-  private titleContainer: PIXI.Container | null = null;
-  private isCountingDown = false;
 
   private boardOriginX = 0;
   private boardOriginY = 0;
-  private boardPixelSize = 0;
-  private cellSize = 0;
+  private cellSize = 30;
+  private boardPixelSize = 600;
+  private totalRopesInCurrentLevel = 0;
+  private isCountingDown = false;
+
+  private startButtonContainer: PIXI.Container | null = null;
+  private titleContainer: PIXI.Container | null = null;
 
   constructor(app: PIXI.Application) {
     this.app = app;
+    this.audio = createTechnoAudioEngine();
+
+    this.state = {
+      level: 1,
+      score: 0,
+      lives: 3,
+      shufflesRemainingInStreak: 3,
+      ropes: [],
+      gridSize: 24,
+      shapeName: 'Car',
+      validCells: new Set(),
+      isPlaying: false,
+      isGameOver: false,
+      isMuted: false
+    };
+
+    this.rootContainer = new PIXI.Container();
     this.app.stage.addChild(this.rootContainer);
+
+    this.boardContainer = new PIXI.Container();
+    this.boardBg = new PIXI.Graphics();
+    this.ropesContainer = new PIXI.Container();
+    this.uiContainer = new PIXI.Container();
+    this.fxContainer = new PIXI.Container();
+    this.countdownContainer = new PIXI.Container();
 
     this.rootContainer.addChild(this.boardContainer);
     this.boardContainer.addChild(this.boardBg);
     this.boardContainer.addChild(this.ropesContainer);
 
-    this.hud = createHud();
+    this.hud = createHud(() => this.toggleMute());
     this.rootContainer.addChild(this.hud.container);
     this.rootContainer.addChild(this.fxContainer);
     this.rootContainer.addChild(this.countdownContainer);
@@ -70,6 +85,11 @@ export class ArrowTapGame {
     this.setupHomeScreen();
     this.handleResize();
     window.addEventListener('resize', () => this.handleResize());
+  }
+
+  private toggleMute(): void {
+    this.state.isMuted = this.audio.toggleMute();
+    this.hud.updateMuteState(this.state.isMuted);
   }
 
   private setupHomeScreen(): void {
@@ -113,7 +133,10 @@ export class ArrowTapGame {
 
     this.startButtonContainer = createStartButton(
       () => this.startNewGame(),
-      () => this.audio.playTapSound()
+      () => {
+        triggerTapHaptic();
+        this.audio.playTapSound();
+      }
     );
     this.uiContainer.addChild(this.startButtonContainer);
 
@@ -128,114 +151,102 @@ export class ArrowTapGame {
       this.titleContainer.x = cx;
       this.titleContainer.y = cy - 80;
     }
-
     if (this.startButtonContainer) {
       this.startButtonContainer.x = cx;
-      this.startButtonContainer.y = cy + 70;
+      this.startButtonContainer.y = cy + 60;
     }
   }
 
   public startNewGame(): void {
-    this.state = {
-      level: 1,
-      score: 0,
-      lives: 3,
-      shufflesRemainingInStreak: 3,
-      ropes: [],
-      gridSize: 20,
-      shapeName: 'Car',
-      validCells: new Set(),
-      isPlaying: true,
-      isGameOver: false
-    };
+    this.state.level = 1;
+    this.state.score = 0;
+    this.state.lives = 3;
+    this.state.shufflesRemainingInStreak = 3;
+    this.state.isPlaying = true;
+    this.state.isGameOver = false;
 
     this.uiContainer.removeChildren();
     this.hud.container.visible = true;
     this.boardContainer.visible = true;
 
-    this.hud.updateLevel(this.state.level);
     this.hud.updateScore(this.state.score);
     this.hud.updateLives(this.state.lives);
     this.hud.updateShuffleCounter(this.state.shufflesRemainingInStreak);
 
+    this.audio.start();
     this.loadLevel(this.state.level);
   }
 
-  private runCountdown(onReady: () => void): void {
-    this.isCountingDown = true;
-    this.countdownContainer.removeChildren();
-    const cx = this.app.screen.width / 2;
-    const cy = this.app.screen.height / 2;
+  private loadLevel(levelNum: number): void {
+    const screenMinDimension = Math.min(this.app.screen.width, this.app.screen.height);
+    const levelData = generateSolvableLevel(levelNum, screenMinDimension);
 
-    const steps = [
-      { text: '3', num: 3, color: 0x00F0FF },
-      { text: '2', num: 2, color: 0xFFE600 },
-      { text: '1', num: 1, color: 0xFF9900 },
-      { text: 'GO !', num: 0, color: 0x00FF66 }
-    ];
-
-    let current = 0;
-
-    const playNextStep = () => {
-      if (current >= steps.length) {
-        this.isCountingDown = false;
-        this.countdownContainer.removeChildren();
-        this.audio.start();
-        onReady();
-        return;
-      }
-
-      const item = steps[current];
-      this.audio.playCountdownBeep(item.num);
-
-      this.countdownContainer.removeChildren();
-      const txt = new PIXI.Text({
-        text: item.text,
-        style: {
-          fontFamily: 'Segoe UI, Impact, sans-serif',
-          fontSize: item.text === 'GO !' ? 68 : 80,
-          fontWeight: 'bold',
-          fill: item.color,
-          stroke: { color: 0x000000, width: 8 },
-          dropShadow: { color: item.color, blur: 16, distance: 0 }
-        }
-      });
-      txt.anchor.set(0.5);
-      txt.x = cx;
-      txt.y = cy;
-      txt.scale.set(0.2);
-      this.countdownContainer.addChild(txt);
-
-      gsap.timeline({ onComplete: () => {
-        current++;
-        playNextStep();
-      }})
-      .to(txt.scale, { x: 1.2, y: 1.2, duration: 0.18, ease: 'back.out(2)' })
-      .to(txt.scale, { x: 1.0, y: 1.0, duration: 0.15 })
-      .to(txt, { alpha: 0, duration: 0.12 });
-    };
-
-    playNextStep();
-  }
-
-  private loadLevel(level: number): void {
-    // Generate adaptive level size matched to screen pixel dimensions
-    const minScreenDim = Math.min(this.app.screen.width, this.app.screen.height);
-    const levelData = generateSolvableLevel(level, minScreenDim);
-
-    this.state.ropes = levelData.ropes;
     this.state.gridSize = levelData.gridSize;
+    this.state.ropes = levelData.ropes;
     this.state.shapeName = levelData.shapeName;
     this.state.validCells = levelData.validCells;
     this.totalRopesInCurrentLevel = levelData.ropes.length;
 
-    this.cellSize = this.boardPixelSize / this.state.gridSize;
-
-    this.renderBoard();
+    this.hud.updateLevel(levelNum);
     this.hud.updateProgress(0);
-    this.hud.updateLevel(level);
+    this.hud.updateShuffleCounter(this.state.shufflesRemainingInStreak);
 
-    this.runCountdown(() => {
+    this.handleResize();
+    this.renderBoard();
+    this.startCountdownSequence();
+  }
+
+  private startCountdownSequence(): void {
+    this.isCountingDown = true;
+    this.countdownContainer.removeChildren();
+
+    const countText = new PIXI.Text({
+      text: '3',
+      style: {
+        fontFamily: 'Segoe UI, Impact, sans-serif',
+        fontSize: 72,
+        fontWeight: 'bold',
+        fill: 0xFFE600,
+        stroke: { color: 0x000000, width: 8 },
+        dropShadow: { color: 0xFF9900, blur: 12, distance: 0 }
+      }
+    });
+    countText.anchor.set(0.5);
+    countText.x = this.app.screen.width / 2;
+    countText.y = this.app.screen.height / 2;
+    this.countdownContainer.addChild(countText);
+
+    const steps = [
+      { text: '3', color: 0xFF3366, stepNum: 3 },
+      { text: '2', color: 0xFF9900, stepNum: 2 },
+      { text: '1', color: 0xFFE600, stepNum: 1 },
+      { text: 'GO !', color: 0x00FF66, stepNum: 0 }
+    ];
+
+    const tl = gsap.timeline({
+      onComplete: () => {
+        this.countdownContainer.removeChildren();
+        this.isCountingDown = false;
+      }
+    });
+
+    steps.forEach((step, index) => {
+      tl.call(() => {
+        countText.text = step.text;
+        countText.style.fill = step.color;
+        this.audio.playCountdownBeep(step.stepNum);
+        triggerTapHaptic();
+      }, undefined, index * 0.45);
+
+      tl.fromTo(
+        countText.scale,
+        { x: 0.2, y: 0.2 },
+        { x: 1.25, y: 1.25, duration: 0.38, ease: 'back.out(2)' },
+        index * 0.45
+      );
+    });
+
+    tl.call(() => {
       spawnFloatingText(
         this.fxContainer,
         `📍 ${this.state.shapeName.toUpperCase()}`,
@@ -248,6 +259,9 @@ export class ArrowTapGame {
 
   private handleKnotTap(rope: Rope): void {
     if (!this.state.isPlaying || this.state.isGameOver || this.isCountingDown) return;
+
+    // Trigger responsive mobile tap vibration
+    triggerTapHaptic();
 
     const handle = this.activeRopeHandles.get(rope.id);
     if (!handle) return;
@@ -278,6 +292,7 @@ export class ArrowTapGame {
 
       if (this.state.ropes.length === 0) {
         this.audio.playFanfareSound();
+        triggerVictoryHaptic(); // 0.10s celebratory vibration burst
         floodEmojis(this.fxContainer, this.app.screen.width / 2, this.app.screen.height / 2, 45);
 
         const cheeringPhrase = getRandomCheeringPhrase();
@@ -319,6 +334,7 @@ export class ArrowTapGame {
 
   private triggerShuffle(): void {
     this.audio.playShuffleSound();
+    triggerTapHaptic();
     this.state.shufflesRemainingInStreak = 3;
     this.hud.updateShuffleCounter(this.state.shufflesRemainingInStreak);
 
@@ -395,7 +411,7 @@ export class ArrowTapGame {
     const width = this.app.screen.width;
     const height = this.app.screen.height;
 
-    // Reserve minimal 45px vertical padding total (top + bottom HUD)
+    // Reserve minimal 54px vertical padding total (top + bottom HUD)
     const availableHeight = height - 54;
     const availableWidth = width - 16;
 
@@ -406,7 +422,7 @@ export class ArrowTapGame {
     this.boardOriginX = (width - this.boardPixelSize) / 2;
     this.boardOriginY = (height - this.boardPixelSize) / 2;
 
-    this.hud.resize(width, height, this.boardPixelSize, height / 2);
+    this.hud.resize(width, height);
     this.updateHomeScreenPositions();
 
     if (this.state.isPlaying) {
