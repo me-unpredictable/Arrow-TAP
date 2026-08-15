@@ -1,0 +1,20 @@
+{
+  "name": "arrow_tap",
+  "version": "1.0.0",
+  "description": "Arrow Tap: The Great Rope Untangle",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "gsap": "^3.12.7",
+    "pixi.js": "^8.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0"
+  }
+}

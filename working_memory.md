@@ -151,18 +151,19 @@ To guarantee seamless gameplay across phones, tablets, foldables, and desktops:
   - Selected Stack: PixiJS (v8) + Vite + TypeScript + GSAP.
   - Architecture rationale & game rules documented.
   - `README.md`, `working_memory.md`, and `bug_report.md` established.
-- [ ] **Milestone 1: Project Scaffolding & Build Setup**
-  - Vite + TypeScript + PixiJS setup.
-  - Responsive canvas manager and safe-area scaling system.
-- [ ] **Milestone 2: Procedural Audio Engine & UI Flow**
-  - Real-time 90s techno synth engine (zero audio downloads).
-  - Start screen with randomized <= 0.15s funny animations.
-  - HUD top/bottom bars (levels, score, 3 lives).
-- [ ] **Milestone 3: Mathematical Maze Generation & Untangling Logic**
-  - Non-overlapping curved rope generator with solvable exit paths.
+- [x] **Milestone 1: Project Scaffolding & Build Setup**
+  - Vite + TypeScript + PixiJS v8 setup.
+  - Strict TypeScript compilation with zero lint/type errors.
+  - Dynamic aspect-ratio preserving square canvas manager and safe-area scaling system.
+- [x] **Milestone 2: Procedural Audio Engine & UI Flow**
+  - Real-time 90s techno synth engine (zero audio downloads) with Web Audio API.
+  - Start screen with randomized <= 0.15s comedic animations (Meltdown, Rocket, Squish, Vaporize).
+  - HUD top/bottom bars (levels, score pop, progress bar, 3 lives with heart fracture animations).
+- [x] **Milestone 3: Mathematical Maze Generation & Untangling Logic**
+  - Non-overlapping curved rope generator with solvability verification.
   - Knot detection, slithering exit animations, and wrong-tap penalty.
-  - Dynamic 3-tap shuffle mechanism.
-- [ ] **Milestone 4: Visual Juice, Particles & Dynamic UI**
-  - Bouncy text animations, emoji flooding FX, dynamic progress bars.
+  - Dynamic 3-tap shuffle mechanism with guaranteed solvability.
+- [x] **Milestone 4: Visual Juice, Particles & Dynamic UI**
+  - Bouncy floating texts, screen shake, emoji flood cascades, dynamic progress bars.
 - [ ] **Milestone 5: Cordova Android Packaging & Testing**
   - Cordova container configuration, APK build, and performance profiling.
