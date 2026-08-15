@@ -1,6 +1,6 @@
 /**
  * @file game.ts
- * @description Main game controller handling state transitions, dynamic square board layout, untangling logic, and 3-tap shuffle loops.
+ * @description Main game controller handling silhouette maze shapes, untangling logic, snake slithering, and 3-tap shuffle loops.
  */
 
 import * as PIXI from 'pixi.js';
@@ -33,7 +33,9 @@ export class ArrowTapGame {
     lives: 3,
     shufflesRemainingInStreak: 3,
     ropes: [],
-    gridSize: 6,
+    gridSize: 10,
+    shape: 'apple',
+    validCells: new Set(),
     isPlaying: false,
     isGameOver: false
   };
@@ -53,7 +55,7 @@ export class ArrowTapGame {
    * 
    * @param {PIXI.Application} app - Root PixiJS Application instance.
    * @returns {ArrowTapGame} Initialized game controller instance.
-   * @description Constructs display scene hierarchy, initializes procedural audio, and prepares home screen.
+   * @description Constructs scene hierarchy, initializes procedural audio, and prepares home screen.
    */
   constructor(app: PIXI.Application) {
     this.app = app;
@@ -164,7 +166,9 @@ export class ArrowTapGame {
       lives: 3,
       shufflesRemainingInStreak: 3,
       ropes: [],
-      gridSize: 6,
+      gridSize: 10,
+      shape: 'apple',
+      validCells: new Set(),
       isPlaying: true,
       isGameOver: false
     };
@@ -183,25 +187,39 @@ export class ArrowTapGame {
   }
 
   /**
-   * Generates and mounts a mathematically verified level puzzle.
+   * Generates and mounts a mathematically verified silhouette maze level.
    * 
    * @param {number} level - Target level to construct.
    * @returns {void}
-   * @description Generates non-overlapping ropes, builds graphic handles, and updates board layout.
+   * @description Generates non-overlapping ropes inside silhouette shape, creates graphic handles, and updates board layout.
    */
   private loadLevel(level: number): void {
-    const generated = generateSolvableLevel(level);
-    this.state.ropes = generated.ropes;
-    this.state.gridSize = generated.gridSize;
-    this.totalRopesInCurrentLevel = generated.ropes.length;
+    const levelData = generateSolvableLevel(level);
+    this.state.ropes = levelData.ropes;
+    this.state.gridSize = levelData.gridSize;
+    this.state.shape = levelData.shape;
+    this.state.validCells = levelData.validCells;
+    this.totalRopesInCurrentLevel = levelData.ropes.length;
+
+    this.cellSize = this.boardPixelSize / this.state.gridSize;
 
     this.renderBoard();
     this.hud.updateProgress(0);
     this.hud.updateLevel(level);
 
+    const shapeIcons: Record<string, string> = {
+      apple: '🍎 APPLE MAZE',
+      heart: '❤️ HEART MAZE',
+      diamond: '💎 DIAMOND MAZE',
+      shield: '🛡️ SHIELD MAZE',
+      circle: '⚪ CIRCLE MAZE',
+      square: '🔲 SQUARE MAZE'
+    };
+
+    const badge = shapeIcons[this.state.shape] || `LEVEL ${level}`;
     spawnFloatingText(
       this.fxContainer,
-      `LEVEL ${level}`,
+      badge,
       this.app.screen.width / 2,
       this.app.screen.height / 2,
       0x00F0FF
@@ -209,11 +227,11 @@ export class ArrowTapGame {
   }
 
   /**
-   * Handles user tapping on a rope knot.
+   * Handles user tapping on a rope knot or arrow head.
    * 
-   * @param {Rope} rope - The rope whose knot was tapped.
+   * @param {Rope} rope - The tapped rope.
    * @returns {void}
-   * @description Evaluates mathematical exit path. Freees rope on success; penalizes life on collision.
+   * @description Evaluates exit path. Slithers rope out on success; triggers recoil and penalty on collision.
    */
   private handleKnotTap(rope: Rope): void {
     if (!this.state.isPlaying || this.state.isGameOver) return;
@@ -221,7 +239,7 @@ export class ArrowTapGame {
     const handle = this.activeRopeHandles.get(rope.id);
     if (!handle) return;
 
-    const canExit = canRopeExit(rope, this.state.ropes, this.state.gridSize);
+    const canExit = canRopeExit(rope, this.state.ropes, this.state.gridSize, this.state.validCells);
 
     if (canExit) {
       // SUCCESSFUL UNTANGLE
@@ -233,18 +251,18 @@ export class ArrowTapGame {
       this.state.ropes = this.state.ropes.filter(r => r.id !== rope.id);
       this.activeRopeHandles.delete(rope.id);
 
-      // Trigger Slither Escape Animation
-      handle.animateSlitherOut(this.cellSize, () => {
+      // Trigger Snake Slither Out Animation
+      handle.animateSlitherOut(this.cellSize, this.boardOriginX, this.boardOriginY, () => {
         this.ropesContainer.removeChild(handle.container);
         handle.container.destroy();
       });
 
       // Spawn celebration particles
-      const knotPos = rope.body[rope.knotIndex];
-      const knotPixelX = this.boardOriginX + (knotPos.x + 0.5) * this.cellSize;
-      const knotPixelY = this.boardOriginY + (knotPos.y + 0.5) * this.cellSize;
-      floodEmojis(this.fxContainer, knotPixelX, knotPixelY, 15);
-      spawnFloatingText(this.fxContainer, '+1', knotPixelX, knotPixelY - 20, 0x00FF66);
+      const headPos = rope.body[rope.body.length - 1];
+      const headPixelX = this.boardOriginX + (headPos.x + 0.5) * this.cellSize;
+      const headPixelY = this.boardOriginY + (headPos.y + 0.5) * this.cellSize;
+      floodEmojis(this.fxContainer, headPixelX, headPixelY, 15);
+      spawnFloatingText(this.fxContainer, '+1', headPixelX, headPixelY - 15, 0x00FF66);
 
       // Update progress
       const clearedCount = this.totalRopesInCurrentLevel - this.state.ropes.length;
@@ -253,7 +271,7 @@ export class ArrowTapGame {
       // Check for Level Completion
       if (this.state.ropes.length === 0) {
         this.audio.playFanfareSound();
-        floodEmojis(this.fxContainer, this.app.screen.width / 2, this.app.screen.height / 2, 40);
+        floodEmojis(this.fxContainer, this.app.screen.width / 2, this.app.screen.height / 2, 45);
         spawnFloatingText(
           this.fxContainer,
           'LEVEL CLEARED! 🎉',
@@ -279,8 +297,8 @@ export class ArrowTapGame {
     } else {
       // ILLEGAL / BLOCKED TAP
       this.audio.playErrorSound();
-      handle.animateBlockedShake();
-      triggerScreenShake(this.rootContainer, 14, 0.2);
+      handle.animateBlockedShake(this.cellSize, this.boardOriginX, this.boardOriginY);
+      triggerScreenShake(this.rootContainer, 12, 0.2);
 
       this.state.lives -= 1;
       this.hud.updateLives(this.state.lives);
@@ -293,7 +311,7 @@ export class ArrowTapGame {
   }
 
   /**
-   * Executes the 3-tap shuffle rearrangement while preserving mathematical solvability.
+   * Executes the 3-tap shuffle rearrangement within silhouette bounds.
    * 
    * @param {void} - No input parameters.
    * @returns {void}
@@ -313,13 +331,13 @@ export class ArrowTapGame {
     );
 
     // Shuffle model
-    this.state.ropes = shuffleRemainingRopes(this.state.ropes, this.state.gridSize);
+    this.state.ropes = shuffleRemainingRopes(this.state.ropes, this.state.gridSize, this.state.validCells);
 
     // Animate subtle container twist on shuffle
     gsap.timeline()
-      .to(this.ropesContainer.scale, { x: 0.9, y: 0.9, duration: 0.1, yoyo: true, repeat: 1 })
+      .to(this.ropesContainer.scale, { x: 0.95, y: 0.95, duration: 0.1, yoyo: true, repeat: 1 })
       .to(this.ropesContainer, {
-        rotation: 0.1,
+        rotation: 0.08,
         duration: 0.08,
         yoyo: true,
         repeat: 1,
@@ -356,39 +374,29 @@ export class ArrowTapGame {
   }
 
   /**
-   * Renders the square board grid and all active rope graphics.
+   * Renders the silhouette background matrix and all active rope graphics.
    * 
    * @param {void} - No input parameters.
    * @returns {void}
-   * @description Draws square background matrix and instantiates reactive rope graphic handles.
+   * @description Draws subtle silhouette background cell meshes and instantiates rope graphic handles.
    */
   private renderBoard(): void {
     this.ropesContainer.removeChildren();
     this.activeRopeHandles.clear();
 
-    // 1. Draw Square Board Background
+    // 1. Draw Silhouette Board Cell Cells
     this.boardBg.clear();
-    this.boardBg.roundRect(
-      this.boardOriginX - 8,
-      this.boardOriginY - 8,
-      this.boardPixelSize + 16,
-      this.boardPixelSize + 16,
-      16
-    );
-    this.boardBg.fill({ color: 0x111827 });
-    this.boardBg.stroke({ color: 0x2563EB, width: 3, alpha: 0.6 });
 
-    // Draw inner grid lines
-    for (let i = 0; i <= this.state.gridSize; i++) {
-      const pos = i * this.cellSize;
-      // Vertical
-      this.boardBg.moveTo(this.boardOriginX + pos, this.boardOriginY);
-      this.boardBg.lineTo(this.boardOriginX + pos, this.boardOriginY + this.boardPixelSize);
-      // Horizontal
-      this.boardBg.moveTo(this.boardOriginX, this.boardOriginY + pos);
-      this.boardBg.lineTo(this.boardOriginX + this.boardPixelSize, this.boardOriginY + pos);
+    // Render subtle background tiles for all valid shape cells
+    for (const cellKey of this.state.validCells) {
+      const [gx, gy] = cellKey.split(',').map(Number);
+      const px = this.boardOriginX + gx * this.cellSize;
+      const py = this.boardOriginY + gy * this.cellSize;
+
+      this.boardBg.roundRect(px + 1, py + 1, this.cellSize - 2, this.cellSize - 2, 4);
     }
-    this.boardBg.stroke({ color: 0x1E293B, width: 1, alpha: 0.5 });
+    this.boardBg.fill({ color: 0x131D31, alpha: 0.7 });
+    this.boardBg.stroke({ color: 0x1E2E4E, width: 1, alpha: 0.4 });
 
     // 2. Instantiate and draw each active rope
     for (const rope of this.state.ropes) {
@@ -400,22 +408,21 @@ export class ArrowTapGame {
   }
 
   /**
-   * Dynamically resizes the game viewport and maximizes the square board while respecting HUD safe zones.
+   * Dynamically resizes the game viewport and maximizes the board while respecting HUD safe zones.
    * 
    * @param {void} - No input parameters.
    * @returns {void}
-   * @description Calculates optimal square dimensions based on window aspect ratio and updates HUD and ropes.
+   * @description Calculates optimal board dimensions based on aspect ratio and updates HUD and ropes.
    */
   public handleResize(): void {
     const width = this.app.screen.width;
     const height = this.app.screen.height;
 
-    // Reserve 90px top and 80px bottom for HUD
-    const availableHeight = height - 180;
-    const availableWidth = width - 40;
+    // Reserve top and bottom HUD safe padding
+    const availableHeight = height - 160;
+    const availableWidth = width - 30;
 
-    // Strictly square board filling as much screen as possible
-    this.boardPixelSize = Math.max(260, Math.min(availableWidth, availableHeight, 600));
+    this.boardPixelSize = Math.max(260, Math.min(availableWidth, availableHeight, 620));
     this.cellSize = this.boardPixelSize / this.state.gridSize;
 
     this.boardOriginX = (width - this.boardPixelSize) / 2;

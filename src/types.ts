@@ -4,6 +4,11 @@
  */
 
 /**
+ * Supported mathematical silhouette shapes for procedural maze boards.
+ */
+export type BoardShape = 'heart' | 'apple' | 'diamond' | 'shield' | 'circle' | 'square';
+
+/**
  * 2D Grid Coordinate representing integer positions on the board matrix.
  */
 export interface GridCoord {
@@ -25,9 +30,18 @@ export interface Vector2D {
 export interface Rope {
   id: number;
   color: number;
-  body: GridCoord[];
-  knotIndex: number; // Index in body where the interactive knot is located (0 or body.length - 1)
-  exitDirection: Vector2D; // Mathematical unit direction vector pointing towards exit
+  body: GridCoord[]; // Ordered list of grid coordinates from Tail (knot) to Head (arrow)
+  exitDirection: Vector2D; // Direction the head arrow is facing
+}
+
+/**
+ * Generated Level Structure.
+ */
+export interface LevelData {
+  ropes: Rope[];
+  gridSize: number;
+  shape: BoardShape;
+  validCells: Set<string>;
 }
 
 /**
@@ -40,6 +54,8 @@ export interface GameState {
   shufflesRemainingInStreak: number;
   ropes: Rope[];
   gridSize: number;
+  shape: BoardShape;
+  validCells: Set<string>;
   isPlaying: boolean;
   isGameOver: boolean;
 }

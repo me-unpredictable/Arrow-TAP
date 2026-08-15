@@ -85,23 +85,31 @@ To guarantee seamless gameplay across phones, tablets, foldables, and desktops:
   4. *Pixel Vaporize:* Scatter burst into tiny colorful confetti particles.
 
 ### 3.4 Rope untangling & Mathematical Solvability
-- **Rope Representation:**
-  - Each rope $R_i$ is a sequence of discrete adjacent grid coordinates: $R_i = \{(x_0, y_0), (x_1, y_1), \dots, (x_k, y_k)\}$.
-  - Ropes do not overlap: $\forall i \ne j, R_i \cap R_j = \emptyset$.
-- **Knot:**
-  - Placed at the terminal endpoints of each rope.
-  - Only knots are interactive / tappable.
-- **Exit Path & Collision Checking:**
-  - For a knot at $(x_e, y_e)$, the slither exit path projects along the rope's trajectory out towards the board edge.
-  - A rope can slither out if and only if its forward exit path to the perimeter is completely unobstructed by any other rope's occupied grid cells:
-    $$\text{CanExit}(R_i) \iff \forall \text{step in ExitPath}(R_i), \text{Grid}(\text{step}) = \text{Empty} \lor \text{Grid}(\text{step}) \in R_i$$
-- **Wrong Tap:**
-  - Tapping a blocked knot deducts 1 life (starts with 3 lives) and triggers screen shake.
-  - 0 lives returns the player to the Home Screen.
-- **Every 3 Successful Taps Shuffle:**
-  - A shuffle event triggers every 3 successful rope removals.
-  - The remaining ropes are reorganized mathematically such that at least one valid unblocked rope exit is guaranteed:
-    $$\exists R_k \in \text{RemainingRopes} \text{ such that } \text{CanExit}(R_k) = \text{True}$$
+### 3.4 Silhouette Shapes & Mathematical Cell Masking
+To provide organic board silhouettes as seen in reference images (Apple, Heart, Diamond, Star, Shield, Octagon):
+- Mathematical coordinate predicate: $\text{IsCellInShape}(x, y, N, \text{ShapeType}) \to \text{boolean}$
+  - **Heart**: $( (x/a)^2 + (y/b - \sqrt{|x/a|})^2 \le 1 )$
+  - **Apple**: Main circular body with top concave notch and stem extension.
+  - **Diamond**: $|x - c_x| + |y - c_y| \le R$
+  - **Shield**: Inverted parabolic base with flat top.
+  - **Circle / Egg**: $(x - c_x)^2 + (y - c_y)^2 \le R^2$
+
+### 3.5 Realistic Braided Rope Texture & Path-Following Snake Physics
+1. **Visual Dimensions:**
+   - Slim, crisp rope width ($3\text{px} - 6\text{px}$ based on density).
+   - Realistic braided / twisted fiber texture pattern along polyline.
+   - Distinct **Arrow Tip** at the head pointing in pull direction.
+   - Tactile **Knot Dot** at the tail.
+2. **True Path-Following Snake Slither Physics:**
+   - When pulled, the rope does NOT move as a rigid slab.
+   - Instead, the rope's polyline points dynamically progress along the exact trajectory:
+     - The head advances forward along the exit raycast vector.
+     - Each successive point moves forward along the rope's existing path segments.
+     - The tail shrinks and detaches from previous segments until the entire rope has slithered out of the board boundary.
+3. **Solvability & Raycast Collision Checking:**
+   - Head arrow points forward in the direction the rope would be pulled.
+   - Solvability check verifies that raycasting from the arrow tip to outside the silhouette hits zero other active rope cells.
+   - If blocked, rope plays a snappy spring recoil bump against the blocking obstacle.
 
 ---
 
