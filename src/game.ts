@@ -331,6 +331,9 @@ export class ArrowTapGame {
     );
 
     this.state.ropes = shuffleRemainingRopes(this.state.ropes, this.state.gridSize, this.state.validCells);
+    this.totalRopesInCurrentLevel = Math.max(this.totalRopesInCurrentLevel, this.state.ropes.length);
+    const cleared = Math.max(0, this.totalRopesInCurrentLevel - this.state.ropes.length);
+    this.hud.updateProgress(cleared / this.totalRopesInCurrentLevel);
 
     gsap.timeline()
       .to(this.ropesContainer.scale, { x: 0.96, y: 0.96, duration: 0.08, yoyo: true, repeat: 1 })
