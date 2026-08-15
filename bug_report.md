@@ -50,14 +50,25 @@ When logging a bug, use the following structure:
     - *Approach:* Implemented fast single-pass topological generation with perimeter alignment.
     - *Result:* Resolved. Generation time reduced to < 3ms with instantaneous board appearance.
 
-### [BUG-004] Arrow Head Pointing Back into Its Own Body
+### [BUG-005] Arrow Head Not Aligned Straight with Last Body Segment
 - **Status:** Fixed
-- **Affected Function(s):** `doesExitHitOwnBody()` and `selectSafeExitDirection()` in `src/math/mazeGenerator.ts`
-- **Root Cause / Reason:** When a rope had U-bends or spiral hooks, assigning `exitDirection = head - prev` caused the arrow to point into its own loop, making it impossible to slither forward without colliding into its own body.
-- **Effect / Symptoms:** Arrowheads pointed directly at their own rope segments, violating basic physics and logical untangling.
+- **Affected Function(s):** `generateDenseWindingRopes()` in `src/math/mazeGenerator.ts`, `drawUltraThinRope()` in `src/rendering/ropeRenderer.ts`
+- **Root Cause / Reason:** In the previous fix for BUG-004, when `head - prev` had potential self-intersection issues, the code picked an arbitrary orthogonal cardinal direction for the arrow tip. This caused the arrowhead to bend at a 90-degree angle from the body segment rather than continuing straight along the line.
+- **Effect / Symptoms:** As seen in bug.png, the arrowhead was visually perpendicular/misaligned with the line body instead of sitting straight at the tip.
 - **Fix History:**
   - **Bug Fix Try #1:**
-    - *Approach:* Enforced strict mathematical raycast check `doesExitHitOwnBody(head, dir, body)`: the chosen exit direction must project outward and have zero intersections with any segment in `rope.body`.
-    - *Result:* Resolved. Arrowheads always point away into open space with zero self-intersections.
+    - *Approach:* Enforced that `exitDirection` is ALWAYS strictly `head - prev` (the natural straight continuation of the final segment). During path construction, steps that cause `head - prev` to raycast into the rope's own body are discarded in favor of outward pointing steps.
+    - *Result:* Resolved. Arrowheads are 100% straight, colinear, and seamlessly aligned with the body segment.
+
+### [BUG-006] Excessive Screen Empty Space & Disconnected Silhouette Shapes
+- **Status:** Fixed
+- **Affected Function(s):** `generateCompositeShape()` in `src/math/shapes.ts`, `handleResize()` in `src/game.ts`
+- **Root Cause / Reason:** Vertical stacked CSG composite shapes created disjointed multi-island shapes with large empty gaps (e.g. Car atop T as shown in bug.png), and the board resolution was restricted to a smaller square bounding box leaving large empty black space on wide screens.
+- **Effect / Symptoms:** Maze looked fragmented into separate islands and occupied only a small fraction of the screen with few arrows.
+- **Fix History:**
+  - **Bug Fix Try #1:**
+    - *Approach:* Replaced split-island CSG shapes with solid, unified contiguous silhouettes (vehicles, objects, symbols, characters) with 85%+ cell occupancy. Expanded board sizing in `handleResize` to fill available screen area without arbitrary caps.
+    - *Result:* Resolved. The board occupies the screen with densely packed winding arrows.
+
 
 

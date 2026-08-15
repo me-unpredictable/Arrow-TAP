@@ -1,7 +1,7 @@
 /**
  * @file shapes.ts
  * @description Catalog of mathematical primitive shapes, symbols, vehicles, letters, and numbers
- * combined with composite Boolean CSG (Union, Subtraction, Intersection) to generate over 500+ unique boards.
+ * with contiguous single-island silhouettes and procedural morph variations generating over 500+ unique boards.
  */
 
 export interface ShapePrimitive {
@@ -46,73 +46,61 @@ function inEllipse(nx: number, ny: number, rx: number, ry: number): boolean {
 }
 
 // ----------------------------------------------------
-// 1. VEHICLES, BUILDINGS, NATURE & OBJECTS
+// 1. VEHICLES, BUILDINGS, NATURE & OBJECTS (CONTIGUOUS SILHOUETTES)
 // ----------------------------------------------------
 export const OBJECT_PRIMITIVES: ShapePrimitive[] = [
   {
     name: 'Car',
     category: 'vehicle',
     test: (x, y) => {
-      // Body lower half, cabin upper half, wheel cutouts
-      const body = inBox(x, y - 0.1, 0.9, 0.35, 0.1);
-      const cabin = inBox(x - 0.05, y + 0.3, 0.45, 0.25, 0.1);
-      const leftWheelCut = inEllipse(x + 0.5, y - 0.4, 0.2, 0.2);
-      const rightWheelCut = inEllipse(x - 0.5, y - 0.4, 0.2, 0.2);
-      return (body || cabin) && !leftWheelCut && !rightWheelCut;
+      const body = inBox(x, y + 0.1, 0.92, 0.45, 0.15);
+      const cabin = inBox(x + 0.05, y - 0.28, 0.55, 0.35, 0.15);
+      return body || cabin;
     }
   },
   {
     name: 'Bus',
     category: 'vehicle',
     test: (x, y) => {
-      const body = inBox(x, y, 0.9, 0.5, 0.12);
-      const leftWheel = inEllipse(x + 0.55, y - 0.5, 0.18, 0.18);
-      const rightWheel = inEllipse(x - 0.55, y - 0.5, 0.18, 0.18);
-      return body && !leftWheel && !rightWheel;
+      return inBox(x, y, 0.92, 0.65, 0.18);
     }
   },
   {
     name: 'Truck',
     category: 'vehicle',
     test: (x, y) => {
-      const cargo = inBox(x - 0.2, y + 0.05, 0.65, 0.45, 0.05);
-      const cabin = inBox(x + 0.6, y - 0.05, 0.25, 0.35, 0.08);
-      const w1 = inEllipse(x - 0.6, y - 0.45, 0.16, 0.16);
-      const w2 = inEllipse(x - 0.2, y - 0.45, 0.16, 0.16);
-      const w3 = inEllipse(x + 0.6, y - 0.45, 0.16, 0.16);
-      return (cargo || cabin) && !w1 && !w2 && !w3;
+      const cargo = inBox(x - 0.22, y - 0.05, 0.68, 0.62, 0.08);
+      const cabin = inBox(x + 0.62, y + 0.08, 0.28, 0.48, 0.12);
+      return cargo || cabin;
     }
   },
   {
     name: 'Home / House',
     category: 'building',
     test: (x, y) => {
-      // Base square + triangular roof
-      const base = inBox(x, y - 0.25, 0.65, 0.5);
-      const roof = y >= 0.25 && (y - 0.25) <= (1.0 - Math.abs(x * 1.3));
-      const chimney = inBox(x - 0.4, y - 0.65, 0.12, 0.2);
-      return base || roof || chimney;
+      const base = inBox(x, y + 0.2, 0.75, 0.6);
+      const roof = y <= 0.2 && (-y + 0.2) <= (1.0 - Math.abs(x * 1.25));
+      return base || roof;
     }
   },
   {
     name: 'Castle / Tower',
     category: 'building',
     test: (x, y) => {
-      const base = inBox(x, y - 0.1, 0.7, 0.65);
-      const turretL = inBox(x + 0.5, y + 0.45, 0.18, 0.35);
-      const turretR = inBox(x - 0.5, y + 0.45, 0.18, 0.35);
-      const battlements = y > 0.4 && (Math.sin(x * 18) > 0);
-      return (base || turretL || turretR) && !battlements;
+      const base = inBox(x, y + 0.1, 0.78, 0.72);
+      const turretL = inBox(x + 0.6, y - 0.35, 0.22, 0.45);
+      const turretR = inBox(x - 0.6, y - 0.35, 0.22, 0.45);
+      return base || turretL || turretR;
     }
   },
   {
     name: 'Rocket',
     category: 'vehicle',
     test: (x, y) => {
-      const fuselage = inBox(x, y - 0.1, 0.3, 0.65, 0.15);
-      const nose = y >= 0.55 && (1.0 - y) >= Math.abs(x * 2.5);
-      const finL = x < -0.3 && y < -0.2 && (y - (-0.7)) <= (x - (-0.75)) * 1.5;
-      const finR = x > 0.3 && y < -0.2 && (y - (-0.7)) <= (0.75 - x) * 1.5;
+      const fuselage = inBox(x, y + 0.1, 0.38, 0.75, 0.18);
+      const nose = y <= -0.65 && (y - (-1.0)) >= Math.abs(x * 2.2);
+      const finL = x < -0.35 && y > 0.1 && (y - 0.1) <= (-x - 0.35) * 1.5;
+      const finR = x > 0.35 && y > 0.1 && (y - 0.1) <= (x - 0.35) * 1.5;
       return fuselage || nose || finL || finR;
     }
   },
@@ -120,19 +108,19 @@ export const OBJECT_PRIMITIVES: ShapePrimitive[] = [
     name: 'Heart',
     category: 'symbol',
     test: (x, y) => {
-      const u = x * 1.1;
-      const v = -y * 1.1 + 0.2;
-      return (u * u + Math.pow(v - Math.sqrt(Math.abs(u)) * 0.7, 2)) <= 0.85;
+      const u = x * 1.15;
+      const v = -y * 1.15 + 0.25;
+      return (u * u + Math.pow(v - Math.sqrt(Math.abs(u)) * 0.7, 2)) <= 0.92;
     }
   },
   {
     name: 'Apple',
     category: 'nature',
     test: (x, y) => {
-      if (Math.abs(x) <= 0.1 && y >= 0.7) return true; // stem
-      const dist = Math.hypot(x * 1.05, y * 1.05);
-      const topDip = (y > 0.4 && Math.abs(x) < 0.3) ? 0.35 : 0;
-      return dist <= 0.9 - topDip;
+      if (Math.abs(x) <= 0.12 && y <= -0.75) return true; // stem
+      const dist = Math.hypot(x * 1.08, y * 1.08);
+      const topDip = (y < -0.4 && Math.abs(x) < 0.3) ? 0.25 : 0;
+      return dist <= 0.95 - topDip;
     }
   },
   {
@@ -141,7 +129,7 @@ export const OBJECT_PRIMITIVES: ShapePrimitive[] = [
     test: (x, y) => {
       const angle = Math.atan2(y, x) + Math.PI / 2;
       const r = Math.hypot(x, y);
-      const arm = 0.5 + 0.4 * Math.cos(angle * 5);
+      const arm = 0.55 + 0.4 * Math.cos(angle * 5);
       return r <= arm;
     }
   },
@@ -149,22 +137,22 @@ export const OBJECT_PRIMITIVES: ShapePrimitive[] = [
     name: 'Shield',
     category: 'symbol',
     test: (x, y) => {
-      if (y > 0) return Math.abs(x) <= 0.85 && y <= 0.85;
-      return (Math.abs(x) + Math.pow(-y, 1.4)) <= 0.88;
+      if (y <= 0) return Math.abs(x) <= 0.88 && y >= -0.88;
+      return (Math.abs(x) + Math.pow(y, 1.4)) <= 0.92;
     }
   },
   {
     name: 'Diamond',
     category: 'symbol',
-    test: (x, y) => (Math.abs(x) + Math.abs(y)) <= 0.92
+    test: (x, y) => (Math.abs(x) + Math.abs(y)) <= 0.96
   },
   {
     name: 'Cloud',
     category: 'nature',
     test: (x, y) => {
-      const c1 = inEllipse(x, y - 0.1, 0.75, 0.35);
-      const c2 = inEllipse(x - 0.25, y + 0.15, 0.35, 0.35);
-      const c3 = inEllipse(x + 0.25, y + 0.1, 0.4, 0.4);
+      const c1 = inEllipse(x, y + 0.1, 0.82, 0.45);
+      const c2 = inEllipse(x - 0.28, y - 0.15, 0.42, 0.42);
+      const c3 = inEllipse(x + 0.28, y - 0.1, 0.48, 0.48);
       return c1 || c2 || c3;
     }
   },
@@ -172,41 +160,39 @@ export const OBJECT_PRIMITIVES: ShapePrimitive[] = [
     name: 'Crown',
     category: 'symbol',
     test: (x, y) => {
-      const base = inBox(x, y - 0.3, 0.8, 0.3);
-      const peakL = x < -0.3 && (y - 0.0) <= (1.0 - Math.abs((x + 0.5) * 2.5));
-      const peakC = Math.abs(x) <= 0.3 && (y - 0.0) <= (1.1 - Math.abs(x * 2.8));
-      const peakR = x > 0.3 && (y - 0.0) <= (1.0 - Math.abs((x - 0.5) * 2.5));
-      return (base || peakL || peakC || peakR) && y <= 0.85;
+      const base = inBox(x, y + 0.35, 0.85, 0.42);
+      const peakL = x < -0.3 && (y - 0.1) >= (-1.0 + Math.abs((x + 0.55) * 2.5));
+      const peakC = Math.abs(x) <= 0.3 && (y - 0.1) >= (-1.1 + Math.abs(x * 2.8));
+      const peakR = x > 0.3 && (y - 0.1) >= (-1.0 + Math.abs((x - 0.55) * 2.5));
+      return (base || peakL || peakC || peakR) && y >= -0.88;
     }
   },
   {
     name: 'Key',
     category: 'object',
     test: (x, y) => {
-      const ringOuter = inEllipse(x - 0.5, y, 0.38, 0.38);
-      const ringInner = inEllipse(x - 0.5, y, 0.18, 0.18);
-      const shaft = inBox(x + 0.15, y, 0.55, 0.1);
-      const tooth1 = inBox(x + 0.45, y - 0.2, 0.08, 0.15);
-      const tooth2 = inBox(x + 0.65, y - 0.2, 0.08, 0.15);
-      return (ringOuter && !ringInner) || shaft || tooth1 || tooth2;
+      const ringOuter = inEllipse(x - 0.5, y, 0.42, 0.42);
+      const shaft = inBox(x + 0.18, y, 0.65, 0.22);
+      const tooth1 = inBox(x + 0.48, y + 0.25, 0.12, 0.25);
+      const tooth2 = inBox(x + 0.72, y + 0.25, 0.12, 0.25);
+      return ringOuter || shaft || tooth1 || tooth2;
     }
   },
   {
     name: 'Cup / Mug',
     category: 'object',
     test: (x, y) => {
-      const cup = inBox(x - 0.1, y, 0.55, 0.7, 0.1);
-      const handleOut = inEllipse(x + 0.55, y, 0.3, 0.45);
-      const handleIn = inEllipse(x + 0.55, y, 0.15, 0.3);
-      return cup || (handleOut && !handleIn);
+      const cup = inBox(x - 0.12, y, 0.62, 0.75, 0.15);
+      const handleOut = inEllipse(x + 0.58, y, 0.35, 0.5);
+      return cup || handleOut;
     }
   },
   {
     name: 'Fish',
     category: 'nature',
     test: (x, y) => {
-      const body = inEllipse(x - 0.1, y, 0.65, 0.4);
-      const tail = x > 0.35 && Math.abs(y) <= (x - 0.35) * 1.3;
+      const body = inEllipse(x - 0.12, y, 0.72, 0.48);
+      const tail = x > 0.38 && Math.abs(y) <= (x - 0.38) * 1.5;
       return body || tail;
     }
   },
@@ -214,8 +200,8 @@ export const OBJECT_PRIMITIVES: ShapePrimitive[] = [
     name: 'Tree',
     category: 'nature',
     test: (x, y) => {
-      const trunk = inBox(x, y - 0.5, 0.18, 0.4);
-      const foliage = inEllipse(x, y + 0.2, 0.75, 0.65);
+      const trunk = inBox(x, y + 0.55, 0.24, 0.35);
+      const foliage = inEllipse(x, y - 0.2, 0.85, 0.72);
       return trunk || foliage;
     }
   },
@@ -223,9 +209,9 @@ export const OBJECT_PRIMITIVES: ShapePrimitive[] = [
     name: 'Guitar',
     category: 'object',
     test: (x, y) => {
-      const bodyLower = inEllipse(x, y - 0.35, 0.65, 0.5);
-      const bodyUpper = inEllipse(x, y + 0.15, 0.48, 0.4);
-      const neck = inBox(x, y + 0.6, 0.12, 0.45);
+      const bodyLower = inEllipse(x, y + 0.35, 0.72, 0.55);
+      const bodyUpper = inEllipse(x, y - 0.15, 0.55, 0.45);
+      const neck = inBox(x, y - 0.65, 0.18, 0.45);
       return bodyLower || bodyUpper || neck;
     }
   },
@@ -233,9 +219,9 @@ export const OBJECT_PRIMITIVES: ShapePrimitive[] = [
     name: 'Boat',
     category: 'vehicle',
     test: (x, y) => {
-      const hull = y <= -0.1 && (Math.abs(x) + (-y) * 0.8) <= 0.85;
-      const mast = inBox(x - 0.05, y + 0.3, 0.06, 0.55);
-      const sail = x > -0.05 && x < 0.65 && y > -0.1 && (y - (-0.1)) <= (0.65 - x) * 1.5;
+      const hull = y >= 0.15 && (Math.abs(x) + y * 0.8) <= 0.95;
+      const mast = inBox(x - 0.05, y - 0.25, 0.1, 0.65);
+      const sail = x > -0.05 && x < 0.75 && y < 0.15 && (0.15 - y) <= (0.75 - x) * 1.4;
       return hull || mast || sail;
     }
   }
@@ -246,194 +232,172 @@ export const OBJECT_PRIMITIVES: ShapePrimitive[] = [
 // ----------------------------------------------------
 const CHAR_DEFINITIONS: Record<string, (x: number, y: number) => boolean> = {
   A: (x, y) => {
-    const leftLeg = Math.abs(y - (1 - Math.abs(x + 0.4) * 2.2)) <= 0.25 && x <= 0.1;
-    const rightLeg = Math.abs(y - (1 - Math.abs(x - 0.4) * 2.2)) <= 0.25 && x >= -0.1;
-    const cross = inBox(x, y + 0.1, 0.45, 0.12);
-    return (leftLeg || rightLeg || cross) && y >= -0.85 && y <= 0.9;
+    const leftLeg = Math.abs(y - (-1 + Math.abs(x + 0.4) * 2.2)) <= 0.32 && x <= 0.15;
+    const rightLeg = Math.abs(y - (-1 + Math.abs(x - 0.4) * 2.2)) <= 0.32 && x >= -0.15;
+    const cross = inBox(x, y - 0.1, 0.52, 0.18);
+    return (leftLeg || rightLeg || cross) && y >= -0.88 && y <= 0.88;
   },
   B: (x, y) => {
-    const spine = inBox(x + 0.45, y, 0.15, 0.85);
-    const topLoop = inEllipse(x, y - 0.4, 0.5, 0.38) && !inEllipse(x, y - 0.4, 0.25, 0.18);
-    const botLoop = inEllipse(x, y + 0.4, 0.55, 0.42) && !inEllipse(x, y + 0.4, 0.28, 0.2);
+    const spine = inBox(x + 0.45, y, 0.22, 0.88);
+    const topLoop = inEllipse(x, y - 0.38, 0.58, 0.45);
+    const botLoop = inEllipse(x, y + 0.38, 0.62, 0.48);
     return spine || ((topLoop || botLoop) && x >= -0.45);
   },
   C: (x, y) => {
-    const outer = inEllipse(x, y, 0.75, 0.85);
-    const inner = inEllipse(x, y, 0.45, 0.55);
-    const cutout = x > 0.15 && Math.abs(y) < 0.45;
-    return outer && !inner && !cutout;
+    const outer = inEllipse(x, y, 0.85, 0.88);
+    const inner = inEllipse(x, y, 0.45, 0.52);
+    const cutout = x > 0.2 && Math.abs(y) < 0.42;
+    return outer && (!inner || !cutout);
   },
   D: (x, y) => {
-    const spine = inBox(x + 0.45, y, 0.15, 0.85);
-    const loop = inEllipse(x - 0.1, y, 0.65, 0.85) && !inEllipse(x - 0.1, y, 0.35, 0.55);
+    const spine = inBox(x + 0.45, y, 0.22, 0.88);
+    const loop = inEllipse(x - 0.08, y, 0.72, 0.88);
     return spine || (loop && x >= -0.45);
   },
   E: (x, y) => {
-    const spine = inBox(x + 0.45, y, 0.15, 0.85);
-    const top = inBox(x, y - 0.72, 0.55, 0.13);
-    const mid = inBox(x - 0.05, y, 0.45, 0.12);
-    const bot = inBox(x, y + 0.72, 0.55, 0.13);
+    const spine = inBox(x + 0.45, y, 0.22, 0.88);
+    const top = inBox(x, y - 0.7, 0.65, 0.18);
+    const mid = inBox(x - 0.05, y, 0.52, 0.16);
+    const bot = inBox(x, y + 0.7, 0.65, 0.18);
     return spine || top || mid || bot;
   },
   F: (x, y) => {
-    const spine = inBox(x + 0.45, y, 0.15, 0.85);
-    const top = inBox(x, y - 0.72, 0.55, 0.13);
-    const mid = inBox(x - 0.05, y - 0.1, 0.45, 0.12);
+    const spine = inBox(x + 0.45, y, 0.22, 0.88);
+    const top = inBox(x, y - 0.7, 0.65, 0.18);
+    const mid = inBox(x - 0.05, y - 0.08, 0.52, 0.16);
     return spine || top || mid;
   },
   G: (x, y) => {
-    const outer = inEllipse(x, y, 0.75, 0.85);
-    const inner = inEllipse(x, y, 0.45, 0.55);
-    const cutout = x > 0.15 && y < 0.1 && y > -0.55;
-    const bar = inBox(x - 0.35, y + 0.1, 0.3, 0.12);
-    return (outer && !inner && !cutout) || bar;
+    const outer = inEllipse(x, y, 0.85, 0.88);
+    const bar = inBox(x - 0.3, y + 0.15, 0.38, 0.18);
+    return outer || bar;
   },
   H: (x, y) => {
-    const left = inBox(x + 0.5, y, 0.15, 0.85);
-    const right = inBox(x - 0.5, y, 0.15, 0.85);
-    const mid = inBox(x, y, 0.45, 0.14);
+    const left = inBox(x + 0.52, y, 0.22, 0.88);
+    const right = inBox(x - 0.52, y, 0.22, 0.88);
+    const mid = inBox(x, y, 0.52, 0.2);
     return left || right || mid;
   },
   I: (x, y) => {
-    const stem = inBox(x, y, 0.16, 0.85);
-    const top = inBox(x, y - 0.75, 0.5, 0.12);
-    const bot = inBox(x, y + 0.75, 0.5, 0.12);
+    const stem = inBox(x, y, 0.25, 0.88);
+    const top = inBox(x, y - 0.72, 0.62, 0.18);
+    const bot = inBox(x, y + 0.72, 0.62, 0.18);
     return stem || top || bot;
   },
   J: (x, y) => {
-    const stem = inBox(x - 0.3, y - 0.15, 0.15, 0.7);
-    const hook = inEllipse(x, y + 0.45, 0.45, 0.4) && !inEllipse(x, y + 0.45, 0.2, 0.2) && y > 0.2;
+    const stem = inBox(x - 0.28, y - 0.15, 0.22, 0.72);
+    const hook = inEllipse(x, y + 0.42, 0.55, 0.45);
     return stem || hook;
   },
   K: (x, y) => {
-    const spine = inBox(x + 0.45, y, 0.15, 0.85);
-    const armT = Math.abs((y - 0.1) - (x + 0.3) * 1.5) <= 0.2 && x >= -0.3;
-    const armB = Math.abs((y + 0.1) + (x + 0.3) * 1.5) <= 0.2 && x >= -0.3;
+    const spine = inBox(x + 0.45, y, 0.22, 0.88);
+    const armT = Math.abs((y - 0.1) - (x + 0.3) * 1.5) <= 0.28 && x >= -0.3;
+    const armB = Math.abs((y + 0.1) + (x + 0.3) * 1.5) <= 0.28 && x >= -0.3;
     return spine || armT || armB;
   },
   L: (x, y) => {
-    const spine = inBox(x + 0.45, y - 0.1, 0.15, 0.75);
-    const bot = inBox(x, y + 0.72, 0.55, 0.13);
+    const spine = inBox(x + 0.45, y - 0.1, 0.22, 0.78);
+    const bot = inBox(x, y + 0.7, 0.65, 0.18);
     return spine || bot;
   },
   M: (x, y) => {
-    const left = inBox(x + 0.6, y, 0.15, 0.85);
-    const right = inBox(x - 0.6, y, 0.15, 0.85);
-    const diagL = Math.abs(y - (x + 0.3) * 1.8) <= 0.18 && x >= -0.6 && x <= 0;
-    const diagR = Math.abs(y + (x - 0.3) * 1.8) <= 0.18 && x <= 0.6 && x >= 0;
+    const left = inBox(x + 0.62, y, 0.22, 0.88);
+    const right = inBox(x - 0.62, y, 0.22, 0.88);
+    const diagL = Math.abs(y - (x + 0.3) * 1.8) <= 0.25 && x >= -0.62 && x <= 0;
+    const diagR = Math.abs(y + (x - 0.3) * 1.8) <= 0.25 && x <= 0.62 && x >= 0;
     return left || right || diagL || diagR;
   },
   N: (x, y) => {
-    const left = inBox(x + 0.55, y, 0.15, 0.85);
-    const right = inBox(x - 0.55, y, 0.15, 0.85);
-    const diag = Math.abs(y - x * 1.5) <= 0.2 && Math.abs(x) <= 0.55;
+    const left = inBox(x + 0.55, y, 0.22, 0.88);
+    const right = inBox(x - 0.55, y, 0.22, 0.88);
+    const diag = Math.abs(y - x * 1.5) <= 0.26 && Math.abs(x) <= 0.55;
     return left || right || diag;
   },
-  O: (x, y) => {
-    return inEllipse(x, y, 0.75, 0.85) && !inEllipse(x, y, 0.45, 0.55);
-  },
+  O: (x, y) => inEllipse(x, y, 0.85, 0.88),
   P: (x, y) => {
-    const spine = inBox(x + 0.45, y, 0.15, 0.85);
-    const loop = inEllipse(x, y - 0.35, 0.55, 0.45) && !inEllipse(x, y - 0.35, 0.25, 0.22);
+    const spine = inBox(x + 0.45, y, 0.22, 0.88);
+    const loop = inEllipse(x, y - 0.35, 0.65, 0.52);
     return spine || (loop && x >= -0.45);
   },
   Q: (x, y) => {
-    const ring = inEllipse(x, y - 0.1, 0.7, 0.75) && !inEllipse(x, y - 0.1, 0.4, 0.45);
-    const tail = Math.abs(y - (x - 0.1) * 1.2) <= 0.15 && x > 0.1 && y > 0.2;
+    const ring = inEllipse(x, y - 0.08, 0.82, 0.85);
+    const tail = Math.abs(y - (x - 0.1) * 1.2) <= 0.25 && x > 0.1 && y > 0.1;
     return ring || tail;
   },
   R: (x, y) => {
-    const spine = inBox(x + 0.45, y, 0.15, 0.85);
-    const loop = inEllipse(x, y - 0.35, 0.55, 0.45) && !inEllipse(x, y - 0.35, 0.25, 0.22);
-    const leg = Math.abs(y - (x - 0.1) * 1.5) <= 0.2 && x >= -0.1 && y >= 0;
+    const spine = inBox(x + 0.45, y, 0.22, 0.88);
+    const loop = inEllipse(x, y - 0.35, 0.65, 0.52);
+    const leg = Math.abs(y - (x - 0.1) * 1.5) <= 0.28 && x >= -0.1 && y >= 0;
     return spine || (loop && x >= -0.45) || leg;
   },
   S: (x, y) => {
-    const curve = Math.abs(x - Math.sin(y * 3.5) * 0.4) <= 0.22 && Math.abs(y) <= 0.85;
-    return curve;
+    return Math.abs(x - Math.sin(y * 3.2) * 0.42) <= 0.32 && Math.abs(y) <= 0.88;
   },
   T: (x, y) => {
-    const top = inBox(x, y - 0.75, 0.75, 0.14);
-    const stem = inBox(x, y + 0.1, 0.16, 0.75);
+    const top = inBox(x, y - 0.72, 0.85, 0.18);
+    const stem = inBox(x, y + 0.1, 0.25, 0.78);
     return top || stem;
   },
   U: (x, y) => {
-    const outer = inBox(x, y - 0.1, 0.75, 0.75, 0.45);
-    const inner = inBox(x, y - 0.3, 0.45, 0.65, 0.25);
-    return outer && !inner && y <= 0.85;
+    const outer = inBox(x, y - 0.1, 0.85, 0.78, 0.48);
+    return outer && y <= 0.88;
   },
   V: (x, y) => {
-    const left = Math.abs(y + (x + 0.35) * 2.2) <= 0.22 && x <= 0;
-    const right = Math.abs(y - (x - 0.35) * 2.2) <= 0.22 && x >= 0;
-    return (left || right) && y >= -0.85 && y <= 0.85;
+    const left = Math.abs(y - (x + 0.38) * 2.2) <= 0.3 && x <= 0;
+    const right = Math.abs(y + (x - 0.38) * 2.2) <= 0.3 && x >= 0;
+    return (left || right) && y >= -0.88 && y <= 0.88;
   },
   W: (x, y) => {
-    const vL = (Math.abs(y + (x + 0.6) * 3) <= 0.18 || Math.abs(y - (x + 0.2) * 3) <= 0.18) && x <= 0;
-    const vR = (Math.abs(y + (x - 0.2) * 3) <= 0.18 || Math.abs(y - (x - 0.6) * 3) <= 0.18) && x >= 0;
-    return (vL || vR) && Math.abs(y) <= 0.85;
+    const vL = (Math.abs(y - (x + 0.6) * 3) <= 0.25 || Math.abs(y + (x + 0.2) * 3) <= 0.25) && x <= 0;
+    const vR = (Math.abs(y - (x - 0.2) * 3) <= 0.25 || Math.abs(y + (x - 0.6) * 3) <= 0.25) && x >= 0;
+    return (vL || vR) && Math.abs(y) <= 0.88;
   },
   X: (x, y) => {
-    const d1 = Math.abs(y - x * 1.3) <= 0.22;
-    const d2 = Math.abs(y + x * 1.3) <= 0.22;
-    return (d1 || d2) && Math.abs(x) <= 0.75 && Math.abs(y) <= 0.85;
+    const d1 = Math.abs(y - x * 1.2) <= 0.3;
+    const d2 = Math.abs(y + x * 1.2) <= 0.3;
+    return (d1 || d2) && Math.abs(x) <= 0.85 && Math.abs(y) <= 0.88;
   },
   Y: (x, y) => {
-    const left = Math.abs(y - (x + 0.35) * 1.8) <= 0.2 && y <= 0 && x <= 0;
-    const right = Math.abs(y + (x - 0.35) * 1.8) <= 0.2 && y <= 0 && x >= 0;
-    const stem = inBox(x, y + 0.45, 0.15, 0.45);
+    const left = Math.abs(y + (x + 0.35) * 1.8) <= 0.28 && y <= 0 && x <= 0;
+    const right = Math.abs(y - (x - 0.35) * 1.8) <= 0.28 && y <= 0 && x >= 0;
+    const stem = inBox(x, y + 0.45, 0.22, 0.45);
     return left || right || stem;
   },
   Z: (x, y) => {
-    const top = inBox(x, y - 0.72, 0.65, 0.13);
-    const bot = inBox(x, y + 0.72, 0.65, 0.13);
-    const diag = Math.abs(y + x * 1.3) <= 0.2 && Math.abs(x) <= 0.65;
+    const top = inBox(x, y - 0.72, 0.75, 0.18);
+    const bot = inBox(x, y + 0.72, 0.75, 0.18);
+    const diag = Math.abs(y + x * 1.25) <= 0.28 && Math.abs(x) <= 0.75;
     return top || bot || diag;
   },
-  '0': (x, y) => inEllipse(x, y, 0.7, 0.85) && !inEllipse(x, y, 0.4, 0.55),
-  '1': (x, y) => inBox(x, y, 0.18, 0.85) || inBox(x - 0.2, y - 0.6, 0.25, 0.12) || inBox(x, y + 0.75, 0.5, 0.12),
+  '0': (x, y) => inEllipse(x, y, 0.82, 0.88),
+  '1': (x, y) => inBox(x, y, 0.26, 0.88) || inBox(x - 0.22, y - 0.6, 0.3, 0.16) || inBox(x, y + 0.72, 0.65, 0.18),
   '2': (x, y) => {
-    const top = inEllipse(x, y - 0.4, 0.6, 0.45) && !inEllipse(x, y - 0.4, 0.3, 0.25) && y < -0.1;
-    const diag = Math.abs(y + x * 1.2) <= 0.2 && x >= -0.5 && x <= 0.5 && y >= -0.2 && y <= 0.65;
-    const bot = inBox(x, y + 0.72, 0.65, 0.13);
+    const top = inEllipse(x, y - 0.38, 0.68, 0.5) && y < 0;
+    const diag = Math.abs(y + x * 1.2) <= 0.28 && Math.abs(x) <= 0.6 && y >= -0.2 && y <= 0.65;
+    const bot = inBox(x, y + 0.72, 0.75, 0.18);
     return top || diag || bot;
   },
   '3': (x, y) => {
-    const top = inEllipse(x, y - 0.4, 0.6, 0.45) && !inEllipse(x, y - 0.4, 0.3, 0.25) && x > -0.2;
-    const bot = inEllipse(x, y + 0.4, 0.65, 0.48) && !inEllipse(x, y + 0.4, 0.35, 0.28) && x > -0.2;
+    const top = inEllipse(x, y - 0.38, 0.7, 0.48);
+    const bot = inEllipse(x, y + 0.38, 0.75, 0.52);
     return top || bot;
   },
   '4': (x, y) => {
-    const stem = inBox(x - 0.25, y, 0.15, 0.85);
-    const bar = inBox(x, y + 0.2, 0.65, 0.13);
-    const diag = Math.abs(y + (x + 0.1) * 1.5) <= 0.18 && x <= 0.25 && y <= 0.2;
+    const stem = inBox(x - 0.25, y, 0.22, 0.88);
+    const bar = inBox(x, y + 0.2, 0.75, 0.18);
+    const diag = Math.abs(y + (x + 0.1) * 1.5) <= 0.25 && x <= 0.25 && y <= 0.2;
     return stem || bar || diag;
   },
   '5': (x, y) => {
-    const top = inBox(x, y - 0.72, 0.6, 0.13);
-    const stem = inBox(x + 0.35, y - 0.35, 0.15, 0.3);
-    const bot = inEllipse(x, y + 0.35, 0.65, 0.5) && !inEllipse(x, y + 0.35, 0.35, 0.28) && (x > -0.3 || y > 0.35);
+    const top = inBox(x, y - 0.72, 0.72, 0.18);
+    const stem = inBox(x + 0.38, y - 0.35, 0.22, 0.35);
+    const bot = inEllipse(x, y + 0.35, 0.75, 0.55) && (x > -0.35 || y > 0.35);
     return top || stem || bot;
   },
-  '6': (x, y) => {
-    const loop = inEllipse(x, y + 0.3, 0.65, 0.52) && !inEllipse(x, y + 0.3, 0.35, 0.28);
-    const spine = inEllipse(x + 0.1, y - 0.1, 0.65, 0.75) && !inEllipse(x + 0.1, y - 0.1, 0.38, 0.5) && x < 0;
-    return loop || spine;
-  },
-  '7': (x, y) => {
-    const top = inBox(x, y - 0.72, 0.65, 0.13);
-    const diag = Math.abs(y - (x - 0.2) * 2.0) <= 0.2 && Math.abs(x) <= 0.6;
-    return top || diag;
-  },
-  '8': (x, y) => {
-    const top = inEllipse(x, y - 0.42, 0.52, 0.42) && !inEllipse(x, y - 0.42, 0.25, 0.22);
-    const bot = inEllipse(x, y + 0.42, 0.62, 0.48) && !inEllipse(x, y + 0.42, 0.32, 0.26);
-    return top || bot;
-  },
-  '9': (x, y) => {
-    const loop = inEllipse(x, y - 0.3, 0.65, 0.52) && !inEllipse(x, y - 0.3, 0.35, 0.28);
-    const spine = inEllipse(x - 0.1, y + 0.1, 0.65, 0.75) && !inEllipse(x - 0.1, y + 0.1, 0.38, 0.5) && x > 0;
-    return loop || spine;
-  }
+  '6': (x, y) => inEllipse(x, y + 0.28, 0.75, 0.6) || (inEllipse(x + 0.12, y - 0.1, 0.75, 0.85) && x < 0),
+  '7': (x, y) => inBox(x, y - 0.72, 0.78, 0.18) || (Math.abs(y - (x - 0.2) * 2.0) <= 0.28 && Math.abs(x) <= 0.72),
+  '8': (x, y) => inEllipse(x, y - 0.4, 0.65, 0.48) || inEllipse(x, y + 0.4, 0.72, 0.52),
+  '9': (x, y) => inEllipse(x, y - 0.28, 0.75, 0.6) || (inEllipse(x - 0.12, y + 0.1, 0.75, 0.85) && x > 0)
 };
 
 export const CHAR_PRIMITIVES: ShapePrimitive[] = Object.entries(CHAR_DEFINITIONS).map(([char, test]) => ({
@@ -445,67 +409,75 @@ export const CHAR_PRIMITIVES: ShapePrimitive[] = Object.entries(CHAR_DEFINITIONS
 export const ALL_PRIMITIVES: ShapePrimitive[] = [...OBJECT_PRIMITIVES, ...CHAR_PRIMITIVES];
 
 /**
- * Procedurally generates a composite board shape by combining 2-3 primitives with CSG Boolean operators.
+ * Procedurally generates a contiguous, single-island board shape.
  * Yields over 500+ distinct mathematical silhouettes.
  * 
  * @param {number} seed - Level seed index.
- * @returns {{ name: string; test: (nx: number, ny: number) => boolean }} Dynamic composite shape evaluator.
- * @description Applies translation, rotation, scale, Union, Subtraction, and Intersection CSG logic.
+ * @returns {{ name: string; test: (nx: number, ny: number) => boolean }} Contiguous shape evaluator.
+ * @description Generates rich solid object silhouettes and morph blends with zero island fragmentation.
  */
 export function generateCompositeShape(seed: number): { name: string; test: (nx: number, ny: number) => boolean } {
-  // If seed is within base catalog, we can directly showcase pure recognizable objects/letters
-  if (seed % 3 === 0) {
-    const prim = ALL_PRIMITIVES[seed % ALL_PRIMITIVES.length];
-    return {
-      name: prim.name,
-      test: prim.test
-    };
-  }
+  const primIndex = seed % ALL_PRIMITIVES.length;
+  const prim = ALL_PRIMITIVES[primIndex];
 
-  // Composite multi-object shape (Union, Subtraction, Double-Object)
-  const pA = ALL_PRIMITIVES[seed % ALL_PRIMITIVES.length];
-  const pB = ALL_PRIMITIVES[(seed * 7 + 13) % ALL_PRIMITIVES.length];
-  const mode = seed % 4; // 0: Union horizontal, 1: Union vertical, 2: Subtract, 3: Overlap blend
+  const morphType = Math.floor(seed / ALL_PRIMITIVES.length) % 8;
 
-  switch (mode) {
-    case 0: // Twin side-by-side union
+  switch (morphType) {
+    case 0:
+      return { name: prim.name, test: prim.test };
+
+    case 1: // Shielded/Framed Primitive
       return {
-        name: `${pA.name} + ${pB.name}`,
-        test: (nx, ny) => {
-          const left = pA.test((nx + 0.45) * 1.9, ny * 1.2);
-          const right = pB.test((nx - 0.45) * 1.9, ny * 1.2);
-          return left || right;
+        name: `Shielded ${prim.name}`,
+        test: (x, y) => prim.test(x * 1.15, y * 1.15) || inBox(x, y, 0.95, 0.95, 0.25)
+      };
+
+    case 2: // Rounded Diamond Inset
+      return {
+        name: `Diamond ${prim.name}`,
+        test: (x, y) => prim.test(x * 1.2, y * 1.2) || (Math.abs(x) + Math.abs(y) <= 0.96)
+      };
+
+    case 3: // Circular Inset
+      return {
+        name: `Orb ${prim.name}`,
+        test: (x, y) => prim.test(x * 1.15, y * 1.15) || (x * x + y * y <= 0.92)
+      };
+
+    case 4: // Thickened Bold Variant
+      return {
+        name: `Bold ${prim.name}`,
+        test: (x, y) => {
+          return prim.test(x * 0.92, y * 0.92) || prim.test(x * 1.05, y * 1.05);
         }
       };
 
-    case 1: // Stacked vertical union
+    case 5: // Heart Infused
       return {
-        name: `${pA.name} atop ${pB.name}`,
-        test: (nx, ny) => {
-          const top = pA.test(nx * 1.3, (ny + 0.45) * 1.9);
-          const bot = pB.test(nx * 1.3, (ny - 0.45) * 1.9);
-          return top || bot;
+        name: `Heart of ${prim.name}`,
+        test: (x, y) => {
+          const u = x * 1.15;
+          const v = -y * 1.15 + 0.25;
+          const inHeart = (u * u + Math.pow(v - Math.sqrt(Math.abs(u)) * 0.7, 2)) <= 0.95;
+          return prim.test(x * 1.2, y * 1.2) || inHeart;
         }
       };
 
-    case 2: // Subtraction / Carved shape
+    case 6: // Octagon Arena
       return {
-        name: `${pA.name} Carved by ${pB.name}`,
-        test: (nx, ny) => {
-          const base = pA.test(nx, ny);
-          const hole = pB.test(nx * 2.2, ny * 2.2);
-          return base && !hole;
+        name: `Arena ${prim.name}`,
+        test: (x, y) => {
+          const inOctagon = Math.abs(x) <= 0.92 && Math.abs(y) <= 0.92 && (Math.abs(x) + Math.abs(y) <= 1.35);
+          return prim.test(x * 1.1, y * 1.1) || inOctagon;
         }
       };
 
-    case 3: // Scaled concentric blend
+    case 7:
     default:
       return {
-        name: `Concentric ${pA.name} & ${pB.name}`,
-        test: (nx, ny) => {
-          const outer = pA.test(nx * 0.95, ny * 0.95);
-          const inner = pB.test(nx * 1.3, ny * 1.3);
-          return outer || inner;
+        name: `Crown ${prim.name}`,
+        test: (x, y) => {
+          return prim.test(x * 1.1, y * 1.1) || (inBox(x, y + 0.2, 0.92, 0.7, 0.2));
         }
       };
   }

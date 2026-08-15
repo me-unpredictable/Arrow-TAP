@@ -397,7 +397,7 @@ export class ArrowTapGame {
     const availableWidth = width - 16;
 
     // Maximize square board to fill as much screen area as possible
-    this.boardPixelSize = Math.max(260, Math.min(availableWidth, availableHeight, 900));
+    this.boardPixelSize = Math.max(280, Math.min(availableWidth, availableHeight));
     this.cellSize = this.boardPixelSize / this.state.gridSize;
 
     this.boardOriginX = (width - this.boardPixelSize) / 2;
