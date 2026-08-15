@@ -62,33 +62,57 @@ To guarantee seamless gameplay across phones, tablets, foldables, and desktops:
 
 ---
 
-## 4. Internal Engineering Policies
+## 4. Internal Engineering Policies & Coding Standards
 
-1. **Tap-First Interaction:**
+1. **Functional & Modular Paradigm:**
+   - Write highly functional, testable, and deterministic code with minimal side effects.
+2. **Mandatory Function Documentation Standard:**
+   - Every single function must be documented with explicit JSDoc / TSDoc blocks covering:
+     - `@param` / **Input**: Parameter name, type, and detailed description.
+     - `@returns` / **Output**: Return type and description of the returned data.
+     - `@description` / **Use**: Clear explanation of the function's purpose and usage.
+3. **Mathematical Level Generation:**
+   - Level generation algorithms must rely on deterministic mathematical formulas (e.g., coordinate matrices, modulo arithmetic, vectors, graph transformations) rather than bloated chains of `if-else` conditions. This enables direct mathematical validation and solvability checks.
+4. **Tap-First Interaction:**
    - All interactive elements must bind to `pointerdown` / `pointerup` with touch feedback latency under 16ms.
    - Avoid mouse click delay (prevent default touch action via CSS `touch-action: manipulation;`).
-2. **Zero Garbage Collection Spikes:**
+5. **Zero Garbage Collection Spikes:**
    - Particle bursts and animated text elements must use object pooling instead of runtime instantiation/destruction during gameplay loops.
-3. **Cordova Compatibility Baseline:**
+6. **Cordova Compatibility Baseline:**
    - Keep external package dependencies minimal and browser-native.
    - Ensure all asset paths use relative referencing (`./assets/...`) so files resolve correctly under `file://` or `cdvfile://` schemes.
-4. **Documentation Rules:**
-   - `README.md` must be written strictly in **Australian English** (e.g., *colour*, *optimised*, *customise*, *programme*) in an engaging, story-telling tone for public presentation.
-   - `working_memory.md` holds technical strategy, policies, and internal notes.
+7. **Documentation Rules:**
+   - `README.md`: Maintained strictly in **Australian English** (*colour*, *optimised*, *customise*, etc.) in an engaging, story-telling tone for public presentation.
+   - `working_memory.md`: Actively updated with architecture notes, state transitions, and milestone progress.
+   - `bug_report.md`: Mandatory bug registry tracking root causes, affected functions, and fix attempts (`Bug Fix Try #X`).
 
 ---
 
-## 5. Development Milestones
+## 5. Bug Tracking Protocol (`bug_report.md`)
+
+- Whenever a bug is discovered or reported:
+  1. Record the bug in `bug_report.md` with:
+     - **Bug ID / Title**
+     - **Affected Function(s)**
+     - **Root Cause / Reason**
+     - **Effect / Symptom**
+  2. Before applying a fix, inspect `bug_report.md` to avoid repeating past errors.
+  3. Log each fix attempt under `Bug Fix Try #[number]` with the applied solution and verification outcome.
+
+---
+
+## 6. Development Milestones
 
 - [x] **Milestone 0: Project Inception & Tech Stack Definition**
   - Git repository initialized.
+  - Selected Stack: PixiJS (v8) + Vite + TypeScript + GSAP.
   - Architecture rationale documented.
-  - `README.md` and `working_memory.md` created.
+  - `README.md`, `working_memory.md`, and `bug_report.md` established.
 - [ ] **Milestone 1: Project Scaffolding & Build Setup**
   - Vite + TypeScript + PixiJS setup.
   - Responsive canvas manager and safe-area scaling system.
 - [ ] **Milestone 2: Core Gameplay & Tap Mechanics**
-  - Arrow puzzle logic, grid generation, and directional mechanics.
+  - Arrow puzzle logic, mathematical grid generation, and directional mechanics.
 - [ ] **Milestone 3: Visual Juice, Particles & Dynamic UI**
   - Bouncy text animations, emoji flooding FX, dynamic progress bars.
 - [ ] **Milestone 4: Audio & Haptic Integration**
