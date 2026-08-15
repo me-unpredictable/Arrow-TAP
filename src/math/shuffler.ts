@@ -128,7 +128,7 @@ export function shuffleRemainingRopes(
       }
     }
 
-    if (allPlaced && isBoardFullySolvable(shuffled, gridSize, validCells)) {
+    if (allPlaced && isBoardFullySolvable(shuffled, gridSize)) {
       return shuffled;
     }
   }
@@ -145,7 +145,7 @@ export function shuffleRemainingRopes(
     }
   }
 
-  if (isBoardFullySolvable(swapped, gridSize, validCells)) {
+  if (isBoardFullySolvable(swapped, gridSize)) {
     return swapped;
   }
 

@@ -37,8 +37,7 @@ export function isWithinBounds(coord: GridCoord, gridSize: number, validCells?: 
 export function canRopeExit(
   rope: Rope,
   allActiveRopes: Rope[],
-  gridSize: number,
-  validCells?: Set<string>
+  gridSize: number
 ): boolean {
   if (rope.body.length < 2) return true;
 
@@ -54,11 +53,11 @@ export function canRopeExit(
     }
   }
 
-  // Raycast forward from head along exitDirection until leaving board/shape bounds
+  // Raycast forward from head along exitDirection until leaving outer board boundary
   let curX = head.x + dir.dx;
   let curY = head.y + dir.dy;
 
-  while (isWithinBounds({ x: curX, y: curY }, gridSize, validCells)) {
+  while (curX >= 0 && curX < gridSize && curY >= 0 && curY < gridSize) {
     if (occupiedByOthers.has(`${curX},${curY}`)) {
       return false; // Path is blocked by another rope
     }
@@ -66,7 +65,7 @@ export function canRopeExit(
     curY += dir.dy;
   }
 
-  return true; // Unobstructed path to perimeter
+  return true; // Unobstructed straight-line escape path out of the board
 }
 
 /**
@@ -74,16 +73,14 @@ export function canRopeExit(
  * 
  * @param {Rope[]} ropes - Array of all active ropes.
  * @param {number} gridSize - Square board dimension.
- * @param {Set<string>} [validCells] - Shape boundary cells.
  * @returns {Rope[]} Array of unblocked ropes.
  * @description Filters active ropes using the mathematical raycast exit formula.
  */
 export function findSolvableRopes(
   ropes: Rope[],
-  gridSize: number,
-  validCells?: Set<string>
+  gridSize: number
 ): Rope[] {
-  return ropes.filter(r => canRopeExit(r, ropes, gridSize, validCells));
+  return ropes.filter(r => canRopeExit(r, ropes, gridSize));
 }
 
 /**
@@ -92,20 +89,18 @@ export function findSolvableRopes(
  * 
  * @param {Rope[]} initialRopes - Array of all ropes on the board.
  * @param {number} gridSize - Dimension of the square grid.
- * @param {Set<string>} [validCells] - Silhouette cells.
  * @returns {{ isSolvable: boolean; escapeSequence: number[] }} Object containing boolean solvability and the exact resolution sequence of rope IDs.
  * @description Executes deterministic full-state elimination simulation to prove absence of deadlock cycles.
  */
 export function verifyNoDeadlock(
   initialRopes: Rope[],
-  gridSize: number,
-  validCells?: Set<string>
+  gridSize: number
 ): { isSolvable: boolean; escapeSequence: number[] } {
   let active = [...initialRopes];
   const escapeSequence: number[] = [];
 
   while (active.length > 0) {
-    const solvable = findSolvableRopes(active, gridSize, validCells);
+    const solvable = findSolvableRopes(active, gridSize);
     if (solvable.length === 0) {
       // Deadlock detected: no active rope has an open exit
       return { isSolvable: false, escapeSequence: [] };
@@ -124,14 +119,12 @@ export function verifyNoDeadlock(
  * 
  * @param {Rope[]} initialRopes - Initial ropes.
  * @param {number} gridSize - Grid dimension.
- * @param {Set<string>} [validCells] - Silhouette cells.
  * @returns {boolean} True if board can be 100% untangled without any deadlocks.
  * @description Invokes verifyNoDeadlock and returns boolean flag.
  */
 export function isBoardFullySolvable(
   initialRopes: Rope[],
-  gridSize: number,
-  validCells?: Set<string>
+  gridSize: number
 ): boolean {
-  return verifyNoDeadlock(initialRopes, gridSize, validCells).isSolvable;
+  return verifyNoDeadlock(initialRopes, gridSize).isSolvable;
 }

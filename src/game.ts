@@ -252,7 +252,7 @@ export class ArrowTapGame {
     const handle = this.activeRopeHandles.get(rope.id);
     if (!handle) return;
 
-    const canExit = canRopeExit(rope, this.state.ropes, this.state.gridSize, this.state.validCells);
+    const canExit = canRopeExit(rope, this.state.ropes, this.state.gridSize);
 
     if (canExit) {
       this.audio.playSuccessSound();
