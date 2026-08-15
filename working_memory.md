@@ -85,31 +85,26 @@ To guarantee seamless gameplay across phones, tablets, foldables, and desktops:
   4. *Pixel Vaporize:* Scatter burst into tiny colorful confetti particles.
 
 ### 3.4 Rope untangling & Mathematical Solvability
-### 3.4 Silhouette Shapes & Mathematical Cell Masking
-To provide organic board silhouettes as seen in reference images (Apple, Heart, Diamond, Star, Shield, Octagon):
-- Mathematical coordinate predicate: $\text{IsCellInShape}(x, y, N, \text{ShapeType}) \to \text{boolean}$
-  - **Heart**: $( (x/a)^2 + (y/b - \sqrt{|x/a|})^2 \le 1 )$
-  - **Apple**: Main circular body with top concave notch and stem extension.
-  - **Diamond**: $|x - c_x| + |y - c_y| \le R$
-  - **Shield**: Inverted parabolic base with flat top.
-  - **Circle / Egg**: $(x - c_x)^2 + (y - c_y)^2 \le R^2$
+### 3.4 Procedural 500+ Composite Silhouette Shapes
+The game features a rich catalog of 2D geometric, vehicular, architectural, alphanumeric, and natural shape primitives (Car, Bus, Truck, Home, Castle, Rocket, Heart, Apple, Star, Shield, Diamond, Cloud, Crown, Key, Cup, Fish, Tree, Guitar, Boat, A–Z, 0–9).
+- **Procedural CSG Jumbling:** Primitives are combined via Constructive Solid Geometry (CSG) operations:
+  - *Side-by-Side Dual Union:* $S_A(x_1, y) \cup S_B(x_2, y)$
+  - *Vertical Stacked Union:* $S_A(x, y_1) \cup S_B(x, y_2)$
+  - *Carved Silhouette Subtraction:* $S_A(x, y) \setminus S_B(x, y)$
+  - *Concentric Nested Blend:* $S_A(\alpha x, \alpha y) \cup S_B(\beta x, \beta y)$
+- Produces over 500+ uniquely recognizable puzzle boards across infinite levels.
 
-### 3.5 Realistic Braided Rope Texture & Path-Following Snake Physics
-1. **Visual Dimensions:**
-   - Slim, crisp rope width ($3\text{px} - 6\text{px}$ based on density).
-   - Realistic braided / twisted fiber texture pattern along polyline.
-   - Distinct **Arrow Tip** at the head pointing in pull direction.
-   - Tactile **Knot Dot** at the tail.
-2. **True Path-Following Snake Slither Physics:**
-   - When pulled, the rope does NOT move as a rigid slab.
-   - Instead, the rope's polyline points dynamically progress along the exact trajectory:
-     - The head advances forward along the exit raycast vector.
-     - Each successive point moves forward along the rope's existing path segments.
-     - The tail shrinks and detaches from previous segments until the entire rope has slithered out of the board boundary.
-3. **Solvability & Raycast Collision Checking:**
-   - Head arrow points forward in the direction the rope would be pulled.
-   - Solvability check verifies that raycasting from the arrow tip to outside the silhouette hits zero other active rope cells.
-   - If blocked, rope plays a snappy spring recoil bump against the blocking obstacle.
+### 3.5 Ultra-Compact Textured Ropes & True Snake Physics
+1. **Compact Dimensions & Realistic Texture:**
+   - Slim braided rope width ($2.5\text{px} - 4.5\text{px}$) allowing high-density maze weaving (14x14 up to 24x24 matrices).
+   - High-contrast outer boundary with dynamic braided fiber weave texture (cross-stitch highlights).
+   - Sharp directional micro-arrowheads at the head and tactile knot buttons at the tail.
+2. **True Snake Slither Physics:**
+   - Pulling traverses polyline vertices forward out through the unblocked raycast path.
+3. **Audio-Synced 3-2-1-GO Countdown:**
+   - At the beginning of every board, a synced 3, 2, 1, GO! countdown plays with escalating oscillator frequencies (440Hz, 554Hz, 659Hz, 880Hz) before starting the 135 BPM 90s techno music.
+4. **50 Cheerful Ending Phrases:**
+   - 50 celebratory phrases (e.g. *"LEGENDARY UNTANGLE! 🌟"*, *"PURE GENIUS! 🧠✨"*, *"KNOT TODAY! 🪢"*, *"MAZE MASTER! 🏆"*) selected randomly upon level completion accompanied by celebratory multi-voice techno victory chords.
 
 ---
 

@@ -1,6 +1,6 @@
 /**
  * @file game.ts
- * @description Main game controller handling silhouette maze shapes, untangling logic, snake slithering, and 3-tap shuffle loops.
+ * @description Main game controller with 3-2-1-GO audio countdown, 500+ composite board shapes, 50 cheering phrases, and compact textured ropes.
  */
 
 import * as PIXI from 'pixi.js';
@@ -14,6 +14,7 @@ import { createHud, HudController } from './ui/hud';
 import { createStartButton } from './ui/startButton';
 import { createRopeGraphic, RopeGraphicHandle } from './rendering/ropeRenderer';
 import { floodEmojis, spawnFloatingText, triggerScreenShake } from './fx/juice';
+import { getRandomCheeringPhrase } from './fx/phrases';
 
 export class ArrowTapGame {
   private app: PIXI.Application;
@@ -26,6 +27,7 @@ export class ArrowTapGame {
   private ropesContainer = new PIXI.Container();
   private fxContainer = new PIXI.Container();
   private uiContainer = new PIXI.Container();
+  private countdownContainer = new PIXI.Container();
 
   private state: GameState = {
     level: 1,
@@ -33,8 +35,8 @@ export class ArrowTapGame {
     lives: 3,
     shufflesRemainingInStreak: 3,
     ropes: [],
-    gridSize: 10,
-    shape: 'apple',
+    gridSize: 14,
+    shapeName: 'Car',
     validCells: new Set(),
     isPlaying: false,
     isGameOver: false
@@ -44,19 +46,13 @@ export class ArrowTapGame {
   private totalRopesInCurrentLevel = 0;
   private startButtonContainer: PIXI.Container | null = null;
   private titleContainer: PIXI.Container | null = null;
+  private isCountingDown = false;
 
   private boardOriginX = 0;
   private boardOriginY = 0;
   private boardPixelSize = 0;
   private cellSize = 0;
 
-  /**
-   * Initializes the game engine on the given PixiJS Application.
-   * 
-   * @param {PIXI.Application} app - Root PixiJS Application instance.
-   * @returns {ArrowTapGame} Initialized game controller instance.
-   * @description Constructs scene hierarchy, initializes procedural audio, and prepares home screen.
-   */
   constructor(app: PIXI.Application) {
     this.app = app;
     this.app.stage.addChild(this.rootContainer);
@@ -68,6 +64,7 @@ export class ArrowTapGame {
     this.hud = createHud();
     this.rootContainer.addChild(this.hud.container);
     this.rootContainer.addChild(this.fxContainer);
+    this.rootContainer.addChild(this.countdownContainer);
     this.rootContainer.addChild(this.uiContainer);
 
     this.setupHomeScreen();
@@ -75,17 +72,11 @@ export class ArrowTapGame {
     window.addEventListener('resize', () => this.handleResize());
   }
 
-  /**
-   * Mounts the Home Screen with title graphics and the rapid-exit start button.
-   * 
-   * @param {void} - No input parameters.
-   * @returns {void}
-   * @description Creates the game title banner and attaches the funny animated start button.
-   */
   private setupHomeScreen(): void {
     this.uiContainer.removeChildren();
     this.hud.container.visible = false;
     this.boardContainer.visible = false;
+    this.countdownContainer.removeChildren();
 
     this.titleContainer = new PIXI.Container();
 
@@ -120,7 +111,6 @@ export class ArrowTapGame {
 
     this.uiContainer.addChild(this.titleContainer);
 
-    // Create Funny Start Button
     this.startButtonContainer = createStartButton(
       () => this.startNewGame(),
       () => this.audio.playTapSound()
@@ -130,13 +120,6 @@ export class ArrowTapGame {
     this.updateHomeScreenPositions();
   }
 
-  /**
-   * Adjusts the position of the home screen elements when the screen resizes.
-   * 
-   * @param {void} - No input parameters.
-   * @returns {void}
-   * @description Centers title and start button based on canvas dimensions.
-   */
   private updateHomeScreenPositions(): void {
     const cx = this.app.screen.width / 2;
     const cy = this.app.screen.height / 2;
@@ -152,13 +135,6 @@ export class ArrowTapGame {
     }
   }
 
-  /**
-   * Initiates a brand-new game session.
-   * 
-   * @param {void} - No input parameters.
-   * @returns {void}
-   * @description Resets game state, starts procedural 90s techno music, and loads Level 1.
-   */
   public startNewGame(): void {
     this.state = {
       level: 1,
@@ -166,8 +142,8 @@ export class ArrowTapGame {
       lives: 3,
       shufflesRemainingInStreak: 3,
       ropes: [],
-      gridSize: 10,
-      shape: 'apple',
+      gridSize: 14,
+      shapeName: 'Car',
       validCells: new Set(),
       isPlaying: true,
       isGameOver: false
@@ -182,22 +158,78 @@ export class ArrowTapGame {
     this.hud.updateLives(this.state.lives);
     this.hud.updateShuffleCounter(this.state.shufflesRemainingInStreak);
 
-    this.audio.start();
     this.loadLevel(this.state.level);
   }
 
   /**
-   * Generates and mounts a mathematically verified silhouette maze level.
+   * Triggers the synced 3-2-1-GO audio and visual countdown before board interactivity begins.
    * 
-   * @param {number} level - Target level to construct.
+   * @param {() => void} onReady - Callback when countdown reaches "GO!" and finishes.
    * @returns {void}
-   * @description Generates non-overlapping ropes inside silhouette shape, creates graphic handles, and updates board layout.
+   * @description Flashes high-impact animated countdown digits synced with audio synth beeps.
    */
+  private runCountdown(onReady: () => void): void {
+    this.isCountingDown = true;
+    this.countdownContainer.removeChildren();
+    const cx = this.app.screen.width / 2;
+    const cy = this.app.screen.height / 2;
+
+    const steps = [
+      { text: '3', num: 3, color: 0x00F0FF },
+      { text: '2', num: 2, color: 0xFFE600 },
+      { text: '1', num: 1, color: 0xFF9900 },
+      { text: 'GO !', num: 0, color: 0x00FF66 }
+    ];
+
+    let current = 0;
+
+    const playNextStep = () => {
+      if (current >= steps.length) {
+        this.isCountingDown = false;
+        this.countdownContainer.removeChildren();
+        this.audio.start(); // Start upbeat techno music right on GO!
+        onReady();
+        return;
+      }
+
+      const item = steps[current];
+      this.audio.playCountdownBeep(item.num);
+
+      this.countdownContainer.removeChildren();
+      const txt = new PIXI.Text({
+        text: item.text,
+        style: {
+          fontFamily: 'Segoe UI, Impact, sans-serif',
+          fontSize: item.text === 'GO !' ? 72 : 84,
+          fontWeight: 'bold',
+          fill: item.color,
+          stroke: { color: 0x000000, width: 8 },
+          dropShadow: { color: item.color, blur: 16, distance: 0 }
+        }
+      });
+      txt.anchor.set(0.5);
+      txt.x = cx;
+      txt.y = cy;
+      txt.scale.set(0.2);
+      this.countdownContainer.addChild(txt);
+
+      gsap.timeline({ onComplete: () => {
+        current++;
+        playNextStep();
+      }})
+      .to(txt.scale, { x: 1.25, y: 1.25, duration: 0.18, ease: 'back.out(2)' })
+      .to(txt.scale, { x: 1.0, y: 1.0, duration: 0.15 })
+      .to(txt, { alpha: 0, duration: 0.12 });
+    };
+
+    playNextStep();
+  }
+
   private loadLevel(level: number): void {
     const levelData = generateSolvableLevel(level);
     this.state.ropes = levelData.ropes;
     this.state.gridSize = levelData.gridSize;
-    this.state.shape = levelData.shape;
+    this.state.shapeName = levelData.shapeName;
     this.state.validCells = levelData.validCells;
     this.totalRopesInCurrentLevel = levelData.ropes.length;
 
@@ -207,34 +239,20 @@ export class ArrowTapGame {
     this.hud.updateProgress(0);
     this.hud.updateLevel(level);
 
-    const shapeIcons: Record<string, string> = {
-      apple: '🍎 APPLE MAZE',
-      heart: '❤️ HEART MAZE',
-      diamond: '💎 DIAMOND MAZE',
-      shield: '🛡️ SHIELD MAZE',
-      circle: '⚪ CIRCLE MAZE',
-      square: '🔲 SQUARE MAZE'
-    };
-
-    const badge = shapeIcons[this.state.shape] || `LEVEL ${level}`;
-    spawnFloatingText(
-      this.fxContainer,
-      badge,
-      this.app.screen.width / 2,
-      this.app.screen.height / 2,
-      0x00F0FF
-    );
+    // Run Synced 3-2-1-GO Countdown before starting board play
+    this.runCountdown(() => {
+      spawnFloatingText(
+        this.fxContainer,
+        `📍 ${this.state.shapeName.toUpperCase()}`,
+        this.app.screen.width / 2,
+        this.app.screen.height / 2 - 60,
+        0x00F0FF
+      );
+    });
   }
 
-  /**
-   * Handles user tapping on a rope knot or arrow head.
-   * 
-   * @param {Rope} rope - The tapped rope.
-   * @returns {void}
-   * @description Evaluates exit path. Slithers rope out on success; triggers recoil and penalty on collision.
-   */
   private handleKnotTap(rope: Rope): void {
-    if (!this.state.isPlaying || this.state.isGameOver) return;
+    if (!this.state.isPlaying || this.state.isGameOver || this.isCountingDown) return;
 
     const handle = this.activeRopeHandles.get(rope.id);
     if (!handle) return;
@@ -247,34 +265,33 @@ export class ArrowTapGame {
       this.state.score += 1;
       this.hud.updateScore(this.state.score);
 
-      // Remove from active data model
       this.state.ropes = this.state.ropes.filter(r => r.id !== rope.id);
       this.activeRopeHandles.delete(rope.id);
 
-      // Trigger Snake Slither Out Animation
       handle.animateSlitherOut(this.cellSize, this.boardOriginX, this.boardOriginY, () => {
         this.ropesContainer.removeChild(handle.container);
         handle.container.destroy();
       });
 
-      // Spawn celebration particles
       const headPos = rope.body[rope.body.length - 1];
       const headPixelX = this.boardOriginX + (headPos.x + 0.5) * this.cellSize;
       const headPixelY = this.boardOriginY + (headPos.y + 0.5) * this.cellSize;
-      floodEmojis(this.fxContainer, headPixelX, headPixelY, 15);
+      floodEmojis(this.fxContainer, headPixelX, headPixelY, 12);
       spawnFloatingText(this.fxContainer, '+1', headPixelX, headPixelY - 15, 0x00FF66);
 
-      // Update progress
       const clearedCount = this.totalRopesInCurrentLevel - this.state.ropes.length;
       this.hud.updateProgress(clearedCount / this.totalRopesInCurrentLevel);
 
       // Check for Level Completion
       if (this.state.ropes.length === 0) {
         this.audio.playFanfareSound();
-        floodEmojis(this.fxContainer, this.app.screen.width / 2, this.app.screen.height / 2, 45);
+        floodEmojis(this.fxContainer, this.app.screen.width / 2, this.app.screen.height / 2, 50);
+
+        // Pick one of the 50 cheering phrases
+        const cheeringPhrase = getRandomCheeringPhrase();
         spawnFloatingText(
           this.fxContainer,
-          'LEVEL CLEARED! 🎉',
+          cheeringPhrase,
           this.app.screen.width / 2,
           this.app.screen.height / 2,
           0xFFE600
@@ -283,11 +300,11 @@ export class ArrowTapGame {
         setTimeout(() => {
           this.state.level += 1;
           this.loadLevel(this.state.level);
-        }, 800);
+        }, 1200);
         return;
       }
 
-      // Check 3-Tap Shuffle Mechanism
+      // 3-Tap Shuffle Mechanism
       this.state.shufflesRemainingInStreak -= 1;
       if (this.state.shufflesRemainingInStreak <= 0) {
         this.triggerShuffle();
@@ -310,13 +327,6 @@ export class ArrowTapGame {
     }
   }
 
-  /**
-   * Executes the 3-tap shuffle rearrangement within silhouette bounds.
-   * 
-   * @param {void} - No input parameters.
-   * @returns {void}
-   * @description Shuffles active ropes, plays sound FX, flashes floating banner, and resets countdown to 3.
-   */
   private triggerShuffle(): void {
     this.audio.playShuffleSound();
     this.state.shufflesRemainingInStreak = 3;
@@ -330,10 +340,8 @@ export class ArrowTapGame {
       0xFF9900
     );
 
-    // Shuffle model
     this.state.ropes = shuffleRemainingRopes(this.state.ropes, this.state.gridSize, this.state.validCells);
 
-    // Animate subtle container twist on shuffle
     gsap.timeline()
       .to(this.ropesContainer.scale, { x: 0.95, y: 0.95, duration: 0.1, yoyo: true, repeat: 1 })
       .to(this.ropesContainer, {
@@ -348,13 +356,6 @@ export class ArrowTapGame {
       });
   }
 
-  /**
-   * Handles player losing all lives and transitions back to the home screen.
-   * 
-   * @param {void} - No input parameters.
-   * @returns {void}
-   * @description Halts game loop, stops procedural music, and displays Game Over modal.
-   */
   private triggerGameOver(): void {
     this.state.isPlaying = false;
     this.state.isGameOver = true;
@@ -373,32 +374,22 @@ export class ArrowTapGame {
     }, 1200);
   }
 
-  /**
-   * Renders the silhouette background matrix and all active rope graphics.
-   * 
-   * @param {void} - No input parameters.
-   * @returns {void}
-   * @description Draws subtle silhouette background cell meshes and instantiates rope graphic handles.
-   */
   private renderBoard(): void {
     this.ropesContainer.removeChildren();
     this.activeRopeHandles.clear();
 
-    // 1. Draw Silhouette Board Cell Cells
     this.boardBg.clear();
 
-    // Render subtle background tiles for all valid shape cells
     for (const cellKey of this.state.validCells) {
       const [gx, gy] = cellKey.split(',').map(Number);
       const px = this.boardOriginX + gx * this.cellSize;
       const py = this.boardOriginY + gy * this.cellSize;
 
-      this.boardBg.roundRect(px + 1, py + 1, this.cellSize - 2, this.cellSize - 2, 4);
+      this.boardBg.roundRect(px + 0.5, py + 0.5, this.cellSize - 1, this.cellSize - 1, 3);
     }
-    this.boardBg.fill({ color: 0x131D31, alpha: 0.7 });
-    this.boardBg.stroke({ color: 0x1E2E4E, width: 1, alpha: 0.4 });
+    this.boardBg.fill({ color: 0x111A2E, alpha: 0.75 });
+    this.boardBg.stroke({ color: 0x1E2D4A, width: 0.8, alpha: 0.4 });
 
-    // 2. Instantiate and draw each active rope
     for (const rope of this.state.ropes) {
       const handle = createRopeGraphic(rope, (r) => this.handleKnotTap(r));
       handle.updateLayout(this.cellSize, this.boardOriginX, this.boardOriginY);
@@ -407,22 +398,14 @@ export class ArrowTapGame {
     }
   }
 
-  /**
-   * Dynamically resizes the game viewport and maximizes the board while respecting HUD safe zones.
-   * 
-   * @param {void} - No input parameters.
-   * @returns {void}
-   * @description Calculates optimal board dimensions based on aspect ratio and updates HUD and ropes.
-   */
   public handleResize(): void {
     const width = this.app.screen.width;
     const height = this.app.screen.height;
 
-    // Reserve top and bottom HUD safe padding
     const availableHeight = height - 160;
     const availableWidth = width - 30;
 
-    this.boardPixelSize = Math.max(260, Math.min(availableWidth, availableHeight, 620));
+    this.boardPixelSize = Math.max(260, Math.min(availableWidth, availableHeight, 640));
     this.cellSize = this.boardPixelSize / this.state.gridSize;
 
     this.boardOriginX = (width - this.boardPixelSize) / 2;

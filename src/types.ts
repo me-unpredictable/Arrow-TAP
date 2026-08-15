@@ -4,11 +4,6 @@
  */
 
 /**
- * Supported mathematical silhouette shapes for procedural maze boards.
- */
-export type BoardShape = 'heart' | 'apple' | 'diamond' | 'shield' | 'circle' | 'square';
-
-/**
  * 2D Grid Coordinate representing integer positions on the board matrix.
  */
 export interface GridCoord {
@@ -40,7 +35,7 @@ export interface Rope {
 export interface LevelData {
   ropes: Rope[];
   gridSize: number;
-  shape: BoardShape;
+  shapeName: string;
   validCells: Set<string>;
 }
 
@@ -54,7 +49,7 @@ export interface GameState {
   shufflesRemainingInStreak: number;
   ropes: Rope[];
   gridSize: number;
-  shape: BoardShape;
+  shapeName: string;
   validCells: Set<string>;
   isPlaying: boolean;
   isGameOver: boolean;
@@ -77,4 +72,5 @@ export interface TechnoAudioController {
   playErrorSound: () => void;
   playShuffleSound: () => void;
   playFanfareSound: () => void;
+  playCountdownBeep: (stepNum: number) => void; // 3, 2, 1, 0 (GO)
 }

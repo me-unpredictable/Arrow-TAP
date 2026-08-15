@@ -1,6 +1,6 @@
 /**
  * @file technoSynth.ts
- * @description Real-time procedural 90s upbeat techno synthesizer and dynamic sound FX engine using the Web Audio API.
+ * @description Real-time procedural 90s upbeat techno synthesizer, 3-2-1-GO audio synchronization, and level victory fanfares using Web Audio API.
  * Requires zero downloaded audio files.
  */
 
@@ -10,7 +10,7 @@ import { TechnoAudioController } from '../types';
  * Creates and initializes the procedural 90s techno audio engine.
  * 
  * @param {void} - No input parameters.
- * @returns {TechnoAudioController} Controller object exposing playback and sound effect methods.
+ * @returns {TechnoAudioController} Controller object exposing playback, sound FX, and countdown sync methods.
  * @description Instantiates an AudioContext and synthesizes 135 BPM 90s techno beats, basslines, arpeggios, and sound FX in real-time.
  */
 export function createTechnoAudioEngine(): TechnoAudioController {
@@ -142,7 +142,7 @@ export function createTechnoAudioEngine(): TechnoAudioController {
    * @param {number} time - Audio scheduled start time.
    * @param {number} bassFreq - Frequency of the bass note in Hz.
    * @returns {void}
-   * @description Produces a punchy square-sine hybrid bass sound.
+   * @description Produces a punchy square-triangle hybrid bass sound.
    */
   function triggerBass(ctx: AudioContext, time: number, bassFreq: number): void {
     const osc = ctx.createOscillator();
@@ -201,13 +201,6 @@ export function createTechnoAudioEngine(): TechnoAudioController {
   }
 
   return {
-    /**
-     * Starts procedural 90s techno music playback.
-     * 
-     * @param {void} - No input parameters.
-     * @returns {void}
-     * @description Initiates the real-time procedural step loop.
-     */
     start: () => {
       if (isPlaying) return;
       getAudioContext();
@@ -216,13 +209,6 @@ export function createTechnoAudioEngine(): TechnoAudioController {
       step();
     },
 
-    /**
-     * Stops procedural 90s techno music playback.
-     * 
-     * @param {void} - No input parameters.
-     * @returns {void}
-     * @description Halts the step loop and clears timeout handles.
-     */
     stop: () => {
       isPlaying = false;
       if (stepTimer !== null) {
@@ -231,24 +217,10 @@ export function createTechnoAudioEngine(): TechnoAudioController {
       }
     },
 
-    /**
-     * Dynamically updates the tempo in beats per minute.
-     * 
-     * @param {number} newBpm - Target tempo.
-     * @returns {void}
-     * @description Sets the playback BPM.
-     */
     setBpm: (newBpm: number) => {
       bpm = Math.max(90, Math.min(180, newBpm));
     },
 
-    /**
-     * Plays a high-frequency blip when an interactive element is tapped.
-     * 
-     * @param {void} - No input parameters.
-     * @returns {void}
-     * @description Generates a crisp tactile audio blip.
-     */
     playTapSound: () => {
       const ctx = getAudioContext();
       const now = ctx.currentTime;
@@ -269,13 +241,6 @@ export function createTechnoAudioEngine(): TechnoAudioController {
       osc.stop(now + 0.06);
     },
 
-    /**
-     * Plays a rewarding celebratory sweep when a rope escapes smoothly.
-     * 
-     * @param {void} - No input parameters.
-     * @returns {void}
-     * @description Synthesizes a 3-note ascending triumph chord.
-     */
     playSuccessSound: () => {
       const ctx = getAudioContext();
       const now = ctx.currentTime;
@@ -299,13 +264,6 @@ export function createTechnoAudioEngine(): TechnoAudioController {
       });
     },
 
-    /**
-     * Plays a dissonant buzz sound when an illegal or blocked move is tapped.
-     * 
-     * @param {void} - No input parameters.
-     * @returns {void}
-     * @description Synthesizes a low-pitch square wave error buzz.
-     */
     playErrorSound: () => {
       const ctx = getAudioContext();
       const now = ctx.currentTime;
@@ -326,13 +284,6 @@ export function createTechnoAudioEngine(): TechnoAudioController {
       osc.stop(now + 0.22);
     },
 
-    /**
-     * Plays a swirling whoosh sound during the 3-tap shuffle.
-     * 
-     * @param {void} - No input parameters.
-     * @returns {void}
-     * @description Synthesizes a rising frequency spiral sound.
-     */
     playShuffleSound: () => {
       const ctx = getAudioContext();
       const now = ctx.currentTime;
@@ -353,34 +304,56 @@ export function createTechnoAudioEngine(): TechnoAudioController {
       osc.stop(now + 0.26);
     },
 
-    /**
-     * Plays a grand level completion fanfare.
-     * 
-     * @param {void} - No input parameters.
-     * @returns {void}
-     * @description Plays a rapid multi-voice celebratory arpeggio.
-     */
     playFanfareSound: () => {
       const ctx = getAudioContext();
       const now = ctx.currentTime;
-      const arpeggio = [440, 554.37, 659.25, 880, 1108.73, 1318.51, 1760];
+      // Grand celebratory techno victory arpeggio
+      const chords = [
+        [523.25, 659.25, 783.99],   // C Major
+        [587.33, 739.99, 880.00],   // D Major
+        [659.25, 830.61, 987.77],   // E Major
+        [1046.50, 1318.51, 1567.98] // High C Super Fanfare
+      ];
 
-      arpeggio.forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+      chords.forEach((chord, stepIdx) => {
+        chord.forEach(freq => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
 
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.04);
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(freq, now + stepIdx * 0.12);
 
-        gain.gain.setValueAtTime(0.18, now + idx * 0.04);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.22);
+          gain.gain.setValueAtTime(0.18, now + stepIdx * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + stepIdx * 0.12 + 0.35);
 
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
 
-        osc.start(now + idx * 0.04);
-        osc.stop(now + idx * 0.04 + 0.25);
+          osc.start(now + stepIdx * 0.12);
+          osc.stop(now + stepIdx * 0.12 + 0.38);
+        });
       });
+    },
+
+    playCountdownBeep: (stepNum: number) => {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      // Pitch escalates: 3 (440Hz), 2 (554Hz), 1 (659Hz), GO (880Hz octave leap)
+      const freq = stepNum === 0 ? 880 : (440 + (3 - stepNum) * 110);
+      osc.type = stepNum === 0 ? 'sawtooth' : 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + (stepNum === 0 ? 0.35 : 0.18));
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + (stepNum === 0 ? 0.38 : 0.2));
     }
   };
 }
