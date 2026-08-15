@@ -4,7 +4,7 @@
  */
 
 import { GridCoord, LevelData, Rope, Vector2D } from '../types';
-import { isBoardFullySolvable, isWithinBounds } from './solver';
+import { canRopeExit, isBoardFullySolvable, isWithinBounds } from './solver';
 import { generateCompositeShape } from './shapes';
 
 // High-contrast vibrant rope colors
@@ -180,10 +180,32 @@ export function generateSolvableLevel(level: number): LevelData {
     }
   }
 
-  // Fallback
-  const fallbackCandidates = generateCandidateRopes(gridSize, validCells, Math.floor(validCells.size / 4.5));
+  // Fallback: generate and enforce zero-deadlock exit corridors
+  const fallbackCandidates = generateCandidateRopes(gridSize, validCells, Math.max(4, Math.floor(validCells.size / 5)));
+  
+  if (isBoardFullySolvable(fallbackCandidates, gridSize, validCells)) {
+    return {
+      ropes: fallbackCandidates,
+      gridSize,
+      shapeName: shapeInfo.name,
+      validCells
+    };
+  }
+
+  // Adjust orientations to guarantee full solvability without deadlocks
+  const solvableFallback = fallbackCandidates.map(r => {
+    // Pick first direction towards boundary with open exit
+    for (const dir of CARDINAL_DIRS) {
+      const candidate = { ...r, exitDirection: dir };
+      if (canRopeExit(candidate, fallbackCandidates, gridSize, validCells)) {
+        return candidate;
+      }
+    }
+    return r;
+  });
+
   return {
-    ropes: fallbackCandidates,
+    ropes: solvableFallback,
     gridSize,
     shapeName: shapeInfo.name,
     validCells

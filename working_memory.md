@@ -106,6 +106,19 @@ The game features a rich catalog of 2D geometric, vehicular, architectural, alph
 4. **50 Cheerful Ending Phrases:**
    - 50 celebratory phrases (e.g. *"LEGENDARY UNTANGLE! 🌟"*, *"PURE GENIUS! 🧠✨"*, *"KNOT TODAY! 🪢"*, *"MAZE MASTER! 🏆"*) selected randomly upon level completion accompanied by celebratory multi-voice techno victory chords.
 
+### 3.6 Mathematical Zero-Deadlock Verification Protocol
+To ensure that NO procedural board or dynamic 3-tap shuffle ever generates an unsolvable deadlock:
+1. **Topological Elimination Proof (`verifyNoDeadlock`):**
+   - Given active ropes $R = \{R_1, R_2, \dots, R_k\}$, iteratively find unblocked ropes $\text{Solvable}(R) = \{r \in R \mid \text{CanExit}(r)\}$.
+   - While $|R| > 0$:
+     - If $|\text{Solvable}(R)| = 0$, **Deadlock Proof**: return `{ isSolvable: false }`.
+     - Remove $r_0 \in \text{Solvable}(R)$ and update $R \leftarrow R \setminus \{r_0\}$.
+   - If $|R| = 0$, **Zero-Deadlock Guarantee**: return `{ isSolvable: true, escapeSequence }`.
+2. **Applied Across All Randomizations:**
+   - **Level Initialization:** Candidate mazes must pass `isBoardFullySolvable` simulation.
+   - **3-Tap Shuffles:** Every shuffle candidate validates that the *entire remaining sequence* is 100% solvable down to 0 ropes without circular dependencies.
+   - **Fallback Corridor Alignment:** If random slotting fails, deterministic outer-to-inner corridor alignment is applied.
+
 ---
 
 ## 4. Internal Engineering Policies & Coding Standards

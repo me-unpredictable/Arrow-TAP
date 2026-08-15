@@ -1,6 +1,6 @@
 /**
  * @file solver.ts
- * @description Mathematical raycasting and path obstruction solver for high-density silhouette rope mazes.
+ * @description Mathematical raycasting, path obstruction solver, and strict zero-deadlock verification proofs.
  */
 
 import { GridCoord, Rope, Vector2D } from '../types';
@@ -87,30 +87,51 @@ export function findSolvableRopes(
 }
 
 /**
- * Mathematically validates whether a complete board state is fully solvable from start to finish.
+ * Mathematically verifies that a board configuration has ZERO deadlocks from start to finish.
+ * Returns the exact sequential topological untangling order.
  * 
- * @param {Rope[]} initialRopes - Initial set of ropes on the board.
- * @param {number} gridSize - Square board dimension.
- * @param {Set<string>} [validCells] - Shape boundary cells.
- * @returns {boolean} True if the entire board can be untangled to 0 remaining ropes.
- * @description Simulates sequential untangling steps until all ropes are cleared or a deadlock occurs.
+ * @param {Rope[]} initialRopes - Array of all ropes on the board.
+ * @param {number} gridSize - Dimension of the square grid.
+ * @param {Set<string>} [validCells] - Silhouette cells.
+ * @returns {{ isSolvable: boolean; escapeSequence: number[] }} Object containing boolean solvability and the exact resolution sequence of rope IDs.
+ * @description Executes deterministic full-state elimination simulation to prove absence of deadlock cycles.
+ */
+export function verifyNoDeadlock(
+  initialRopes: Rope[],
+  gridSize: number,
+  validCells?: Set<string>
+): { isSolvable: boolean; escapeSequence: number[] } {
+  let active = [...initialRopes];
+  const escapeSequence: number[] = [];
+
+  while (active.length > 0) {
+    const solvable = findSolvableRopes(active, gridSize, validCells);
+    if (solvable.length === 0) {
+      // Deadlock detected: no active rope has an open exit
+      return { isSolvable: false, escapeSequence: [] };
+    }
+    // Pick the first solvable rope, register its escape, and continue simulation
+    const nextFreeRope = solvable[0];
+    escapeSequence.push(nextFreeRope.id);
+    active = active.filter(r => r.id !== nextFreeRope.id);
+  }
+
+  return { isSolvable: true, escapeSequence };
+}
+
+/**
+ * Helper predicate checking if an entire board state is fully solvable with zero deadlocks.
+ * 
+ * @param {Rope[]} initialRopes - Initial ropes.
+ * @param {number} gridSize - Grid dimension.
+ * @param {Set<string>} [validCells] - Silhouette cells.
+ * @returns {boolean} True if board can be 100% untangled without any deadlocks.
+ * @description Invokes verifyNoDeadlock and returns boolean flag.
  */
 export function isBoardFullySolvable(
   initialRopes: Rope[],
   gridSize: number,
   validCells?: Set<string>
 ): boolean {
-  let active = [...initialRopes];
-  
-  while (active.length > 0) {
-    const solvable = findSolvableRopes(active, gridSize, validCells);
-    if (solvable.length === 0) {
-      return false; // Deadlock: no rope can escape
-    }
-    // Remove the first unblocked rope and continue simulation
-    const freedId = solvable[0].id;
-    active = active.filter(r => r.id !== freedId);
-  }
-
-  return true;
+  return verifyNoDeadlock(initialRopes, gridSize, validCells).isSolvable;
 }
