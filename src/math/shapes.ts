@@ -1,5 +1,6 @@
 /**
  * @file shapes.ts
+ * @author @me__unpredictable
  * @description Catalog of mathematical primitive shapes, symbols, vehicles, letters, and numbers
  * with contiguous single-island silhouettes and procedural morph variations generating over 500+ unique boards.
  */

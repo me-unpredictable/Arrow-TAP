@@ -1,5 +1,6 @@
 /**
  * @file hud.ts
+ * @author @me__unpredictable
  * @description Ultra-compact HUD with top status bar, level progress, mute button, and bottom lives.
  */
 

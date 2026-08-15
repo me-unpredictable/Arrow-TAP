@@ -1,5 +1,6 @@
 /**
  * @file startButton.ts
+ * @author @me__unpredictable
  * @description Start button component with randomized comedic exit animations guaranteed <= 0.15s (150ms).
  */
 

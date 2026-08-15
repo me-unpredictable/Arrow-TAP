@@ -1,5 +1,6 @@
 /**
  * @file shuffler.ts
+ * @author @me__unpredictable
  * @description Instantaneous (< 1ms) dynamic maze shuffler that genuinely rearranges remaining arrows
  * into new winding trajectories with longer lengths, multi-color palette, and guaranteed 100% solvability.
  */

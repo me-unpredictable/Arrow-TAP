@@ -1,5 +1,6 @@
 /**
  * @file technoSynth.ts
+ * @author @me__unpredictable
  * @description Real-time procedural 90s upbeat techno synthesizer, 3-2-1-GO audio synchronization, mute toggle, and level victory fanfares using Web Audio API.
  * Requires zero downloaded audio files.
  */

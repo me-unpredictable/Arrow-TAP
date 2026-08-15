@@ -1,5 +1,6 @@
 /**
  * @file haptics.ts
+ * @author @me__unpredictable
  * @description Cross-platform haptic feedback engine supporting mobile browsers (Android/iOS) and Cordova container vibration.
  */
 

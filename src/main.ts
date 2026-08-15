@@ -1,40 +1,44 @@
 /**
  * @file main.ts
- * @description Application bootstrap script that initializes PixiJS v8 and starts Arrow Tap.
+ * @author @me__unpredictable
+ * @description Bootstrap and lifecycle initialization for Arrow Tap PixiJS application.
  */
 
 import * as PIXI from 'pixi.js';
 import { ArrowTapGame } from './game';
 
 /**
- * Bootstraps the PixiJS WebGL/WebGPU application and mounts the game controller.
+ * Initializes and mounts the PixiJS application into the DOM.
  * 
  * @param {void} - No input parameters.
- * @returns {Promise<void>} Resolves when the engine is initialized.
- * @description Configures auto-resizing canvas, retina DPR clamping, mounts to DOM, and launches ArrowTapGame.
+ * @returns {Promise<void>} Resolves when PixiJS engine and Arrow Tap game instance are mounted.
+ * @description Creates fullscreen WebGL/WebGPU application canvas with auto-resizing.
  */
-async function bootstrap(): Promise<void> {
+async function init(): Promise<void> {
   const app = new PIXI.Application();
 
   await app.init({
     resizeTo: window,
-    backgroundColor: 0x070a13,
-    antialias: true,
-    resolution: Math.min(window.devicePixelRatio || 1, 2),
-    autoDensity: true
+    backgroundColor: 0x0A0F1D,
+    resolution: window.devicePixelRatio || 1,
+    autoDensity: true,
+    antialias: true
   });
 
-  const appContainer = document.getElementById('app');
-  if (appContainer) {
-    appContainer.appendChild(app.canvas);
+  const appElement = document.getElementById('app');
+  if (appElement) {
+    appElement.appendChild(app.canvas);
+  } else {
+    document.body.appendChild(app.canvas);
   }
 
-  // Instantiate Game Controller
-  new ArrowTapGame(app);
+  // Initialize Arrow Tap Game
+  const game = new ArrowTapGame(app);
+  (window as unknown as { __ARROW_TAP_GAME__: ArrowTapGame }).__ARROW_TAP_GAME__ = game;
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  bootstrap().catch(err => {
-    console.error('Failed to bootstrap Arrow Tap:', err);
+  init().catch((err) => {
+    console.error('Failed to initialize Arrow Tap engine:', err);
   });
 });

@@ -1,5 +1,6 @@
 /**
  * @file game.ts
+ * @author @me__unpredictable
  * @description Main game controller for Arrow Tap with screen-adaptive rendering, 3-2-1-GO countdown,
  * mobile tap vibrations, 100ms victory haptics, HUD mute button, and 3-tap shuffle.
  */

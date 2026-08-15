@@ -1,5 +1,6 @@
 /**
  * @file mazeGenerator.ts
+ * @author @me__unpredictable
  * @description Mathematical Potential-Gradient DAG maze generator with longer winding arrows (5-9 segments)
  * and rich multi-colored 90s techno palette guaranteeing 100% solvability with ZERO deadlocks and 100% straight colinear arrowheads.
  */

@@ -1,4 +1,21 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+
+# Production builds
+dist/
+
+# Operating System & IDE
 .DS_Store
+Thumbs.db
 *.local
+.vscode/
+.idea/
+
+# Internal Agent & Tracking Documents (DO NOT PUBLISH)
+working_memory.md
+bug_report.md
+bug.png
+1.jpg
+2.jpg
+scratch/
+src/testSolvability.ts

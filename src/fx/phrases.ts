@@ -1,5 +1,6 @@
 /**
  * @file phrases.ts
+ * @author @me__unpredictable
  * @description Catalog of 50 enthusiastic, joyful, and cheering celebratory phrases displayed after clearing levels.
  */
 

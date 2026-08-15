@@ -1,4 +1,4 @@
-# 🏹 Arrow Tap: The Great Rope Untangle
+# 🏹 Arrow Tap: The Great Neon Arrow Untangle
 
 > *G’day and welcome! Step right up and discover the story of Arrow Tap — a high-octane, ultra-juicy puzzle adventure where your sharp eyes, quick wits, and the pure satisfaction of a single tap untangle the wildest knot mazes ever spun.*
 
@@ -65,6 +65,38 @@ Every infinite level and 3-tap shuffle is mathematically constructed and verifie
 3. **Beware the Blockers:** Tapping a blocked arrow costs 1 life (you start with 3 lives).
 4. **The 3-Tap Dynamic Shuffle:** Every 3 successful untangles, the remaining arrows dynamically re-route into brand new winding paths while strictly preserving full solvability.
 5. **Level Clear Fanfare:** Clear all arrows to trigger the victory fanfare, 100ms celebration haptics, and cheering phrase explosions!
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) (version 18 or higher)
+- npm or yarn
+
+### Installation & Local Play
+```bash
+# Clone the repository
+git clone git@github.com:me-unpredictable/Arrow-TAP.git
+cd Arrow-TAP
+
+# Install dependencies
+npm install
+
+# Launch local development server
+npm run dev
+```
+
+### Production Build
+```bash
+npm run build
+```
+
+---
+
+## 👨‍💻 Author & Creator
+
+Crafted with passion by **[@me__unpredictable](https://github.com/me-unpredictable)**.
 
 ---
 

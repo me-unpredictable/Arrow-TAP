@@ -1,6 +1,7 @@
 /**
  * @file solver.ts
- * @description Mathematical raycasting, path obstruction solver, and strict zero-deadlock verification proofs.
+ * @author @me__unpredictable
+ * @description Mathematical raycasting and topological elimination solver proving ZERO DEADLOCKS for Arrow Tap.
  */
 
 import { GridCoord, Rope, Vector2D } from '../types';

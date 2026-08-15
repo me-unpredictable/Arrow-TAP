@@ -1,7 +1,13 @@
 {
-  "name": "arrow_tap",
+  "name": "arrow-tap",
   "version": "1.0.0",
-  "description": "Arrow Tap: The Great Rope Untangle",
+  "description": "Arrow Tap: The Great Neon Arrow Untangle Puzzle Game",
+  "author": "@me__unpredictable",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:me-unpredictable/Arrow-TAP.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

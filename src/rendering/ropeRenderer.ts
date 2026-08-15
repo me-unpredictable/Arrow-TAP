@@ -1,5 +1,6 @@
 /**
  * @file ropeRenderer.ts
+ * @author @me__unpredictable
  * @description Razor-thin rope graphics renderer with delicate sharp chevrons, clean tail ends (no dot), vibrant techno palette, and true path-following snake slither physics.
  */
 

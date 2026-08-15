@@ -1,5 +1,6 @@
 /**
  * @file types.ts
+ * @author @me__unpredictable
  * @description Core TypeScript type definitions and interfaces for Arrow Tap.
  */
 

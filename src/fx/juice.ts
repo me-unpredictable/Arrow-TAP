@@ -1,5 +1,6 @@
 /**
  * @file juice.ts
+ * @author @me__unpredictable
  * @description High-impact visual juice, emoji flooding particle systems, floating bouncing text, and screen shake mechanics.
  */
 
