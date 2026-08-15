@@ -62,6 +62,49 @@ To guarantee seamless gameplay across phones, tablets, foldables, and desktops:
 
 ---
 
+## 3. Game Mechanics & Mathematical Architecture Specification
+
+### 3.1 Game Overview & Loop
+- **Genre:** Infinite-level procedural rope untangling puzzle.
+- **Board:** Strictly square grid ($N \times N$, scaling from $6 \times 6$ upwards with level progression: $N = \min(12, 6 + \lfloor \text{Level} / 3 \rfloor \times 2)$).
+- **Board Filling:** Maximally expands to fit the smaller viewport dimension (width/height) maintaining a centered square layout with safe padding for HUD (Top bar: Level & Score; Bottom bar: 3 Lives & Streak).
+
+### 3.2 Procedural Audio (90s Upbeat Techno Chiptune Engine)
+- **Zero-Download Audio:** Synthesized in real-time via Web Audio API (`AudioContext`).
+- **Composition:**
+  - 135 BPM driving 4-on-the-floor kick & synthesized noise snare.
+  - Random 16th-note arpeggiator (pentatonic / Dorian modes) using bandpass-filtered square/sawtooth waves.
+  - Sub-bass synth line with frequency modulation.
+  - Dynamic interactive sound FX (satisfying plop on tap, slither whoosh on rope exit, error buzz on wrong tap, party fanfare on level clear).
+
+### 3.3 Start Button "Funny Exit" System
+- **Requirement:** Disappears within $\le 0.15\text{s}$ (150ms) using a randomized comedic animation upon tap:
+  1. *Meltdown:* Quick vertical stretch & dissolve.
+  2. *Rocket Launch:* High-velocity upward snap with smoke sparks.
+  3. *Squish & Pop:* Instant scale inversion to 0 with shockwave ring.
+  4. *Pixel Vaporize:* Scatter burst into tiny colorful confetti particles.
+
+### 3.4 Rope untangling & Mathematical Solvability
+- **Rope Representation:**
+  - Each rope $R_i$ is a sequence of discrete adjacent grid coordinates: $R_i = \{(x_0, y_0), (x_1, y_1), \dots, (x_k, y_k)\}$.
+  - Ropes do not overlap: $\forall i \ne j, R_i \cap R_j = \emptyset$.
+- **Knot:**
+  - Placed at the terminal endpoints of each rope.
+  - Only knots are interactive / tappable.
+- **Exit Path & Collision Checking:**
+  - For a knot at $(x_e, y_e)$, the slither exit path projects along the rope's trajectory out towards the board edge.
+  - A rope can slither out if and only if its forward exit path to the perimeter is completely unobstructed by any other rope's occupied grid cells:
+    $$\text{CanExit}(R_i) \iff \forall \text{step in ExitPath}(R_i), \text{Grid}(\text{step}) = \text{Empty} \lor \text{Grid}(\text{step}) \in R_i$$
+- **Wrong Tap:**
+  - Tapping a blocked knot deducts 1 life (starts with 3 lives) and triggers screen shake.
+  - 0 lives returns the player to the Home Screen.
+- **Every 3 Successful Taps Shuffle:**
+  - A shuffle event triggers every 3 successful rope removals.
+  - The remaining ropes are reorganized mathematically such that at least one valid unblocked rope exit is guaranteed:
+    $$\exists R_k \in \text{RemainingRopes} \text{ such that } \text{CanExit}(R_k) = \text{True}$$
+
+---
+
 ## 4. Internal Engineering Policies & Coding Standards
 
 1. **Functional & Modular Paradigm:**
@@ -72,7 +115,7 @@ To guarantee seamless gameplay across phones, tablets, foldables, and desktops:
      - `@returns` / **Output**: Return type and description of the returned data.
      - `@description` / **Use**: Clear explanation of the function's purpose and usage.
 3. **Mathematical Level Generation:**
-   - Level generation algorithms must rely on deterministic mathematical formulas (e.g., coordinate matrices, modulo arithmetic, vectors, graph transformations) rather than bloated chains of `if-else` conditions. This enables direct mathematical validation and solvability checks.
+   - Level generation algorithms must rely on deterministic mathematical formulas (coordinate matrices, raycasts, vector math) rather than bloated chains of `if-else` conditions. This enables direct mathematical validation and solvability checks.
 4. **Tap-First Interaction:**
    - All interactive elements must bind to `pointerdown` / `pointerup` with touch feedback latency under 16ms.
    - Avoid mouse click delay (prevent default touch action via CSS `touch-action: manipulation;`).
@@ -106,16 +149,20 @@ To guarantee seamless gameplay across phones, tablets, foldables, and desktops:
 - [x] **Milestone 0: Project Inception & Tech Stack Definition**
   - Git repository initialized.
   - Selected Stack: PixiJS (v8) + Vite + TypeScript + GSAP.
-  - Architecture rationale documented.
+  - Architecture rationale & game rules documented.
   - `README.md`, `working_memory.md`, and `bug_report.md` established.
 - [ ] **Milestone 1: Project Scaffolding & Build Setup**
   - Vite + TypeScript + PixiJS setup.
   - Responsive canvas manager and safe-area scaling system.
-- [ ] **Milestone 2: Core Gameplay & Tap Mechanics**
-  - Arrow puzzle logic, mathematical grid generation, and directional mechanics.
-- [ ] **Milestone 3: Visual Juice, Particles & Dynamic UI**
+- [ ] **Milestone 2: Procedural Audio Engine & UI Flow**
+  - Real-time 90s techno synth engine (zero audio downloads).
+  - Start screen with randomized <= 0.15s funny animations.
+  - HUD top/bottom bars (levels, score, 3 lives).
+- [ ] **Milestone 3: Mathematical Maze Generation & Untangling Logic**
+  - Non-overlapping curved rope generator with solvable exit paths.
+  - Knot detection, slithering exit animations, and wrong-tap penalty.
+  - Dynamic 3-tap shuffle mechanism.
+- [ ] **Milestone 4: Visual Juice, Particles & Dynamic UI**
   - Bouncy text animations, emoji flooding FX, dynamic progress bars.
-- [ ] **Milestone 4: Audio & Haptic Integration**
-  - Low-latency sound FX and tap feedback.
 - [ ] **Milestone 5: Cordova Android Packaging & Testing**
   - Cordova container configuration, APK build, and performance profiling.
